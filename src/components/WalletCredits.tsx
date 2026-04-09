@@ -24,16 +24,16 @@ export default function WalletCredits() {
       <div className="space-y-12">
         <div className="flex items-center gap-4">
           <div className="w-12 h-[1px] bg-accent" />
-          <span className="text-[11px] uppercase tracking-[0.3em] font-bold text-accent">Income Estimation System</span>
+          <span className="text-[11px] uppercase tracking-[0.3em] font-bold text-accent">Exchange System</span>
         </div>
         
         <h2 className="text-6xl font-bold tracking-tighter leading-none text-ink">
           Empower Agents.<br />
-          <span className="text-accent">Receive Income.</span>
+          <span className="text-accent">Exchange Credits.</span>
         </h2>
         
         <p className="text-ink/50 text-xl max-w-lg leading-relaxed font-medium">
-          Grant permissions to your agent by doing 'favours for your agent'. Each connection provides an estimate of your weekly income in FCUK coins, payable every Sunday.
+          Grant permissions to your agent by doing 'favours for your agent'. Each connection provides FCUK coins, which you can exchange for real GBP every Sunday.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

@@ -14,12 +14,12 @@ export default function Exchange() {
         <div className="p-12 lg:p-24 border-r border-border bg-card flex flex-col justify-center space-y-12">
           <div className="flex items-center gap-4">
             <div className="w-12 h-[1px] bg-accent" />
-            <span className="text-[11px] uppercase tracking-[0.3em] font-bold text-accent">Income Estimation</span>
+            <span className="text-[11px] uppercase tracking-[0.3em] font-bold text-accent">Exchange</span>
           </div>
           <div className="space-y-6">
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tighter leading-[0.9] text-ink">Income<br />Estimate</h1>
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tighter leading-[0.9] text-ink">FCUK<br />Exchange</h1>
             <p className="text-lg text-ink/50 max-w-xl leading-relaxed font-medium">
-              View an estimate of your weekly income in FCUK coins. All earnings are calculated throughout the week and paid directly to your bank every Sunday.
+              Convert your earned FCUK credits into real GBP. Secure, instant, and transparent payouts directly to your UK bank account every Sunday.
             </p>
           </div>
 
@@ -85,10 +85,10 @@ export default function Exchange() {
 
             <div className="space-y-10">
               <div className="bg-paper border border-border p-10 space-y-8">
-                <h4 className="font-bold text-xl tracking-tight">Sunday Payout Summary</h4>
+                <h4 className="font-bold text-xl tracking-tight">Exchange Summary</h4>
                 <div className="space-y-6">
                   <div className="flex justify-between text-sm font-medium">
-                    <span className="text-ink/30 uppercase tracking-widest">Estimation Rate</span>
+                    <span className="text-ink/30 uppercase tracking-widest">Exchange Rate</span>
                     <span className="text-ink">1 FCUK = £0.01</span>
                   </div>
                   <div className="flex justify-between text-sm font-medium">
@@ -96,14 +96,14 @@ export default function Exchange() {
                     <span className="text-green-500">FREE</span>
                   </div>
                   <div className="pt-8 border-t border-border flex justify-between items-baseline">
-                    <span className="font-bold text-lg tracking-tight">Estimated Payout</span>
+                    <span className="font-bold text-lg tracking-tight">Total Payout</span>
                     <span className="text-5xl font-bold text-accent tracking-tighter">£{gbpAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>
               </div>
 
               <button className="w-full bg-ink text-paper font-bold text-xl py-8 uppercase tracking-[0.2em] hover:bg-accent transition-all shadow-2xl shadow-accent/10 flex items-center justify-center gap-4">
-                Confirm Sunday Payout
+                Confirm Exchange
                 <ArrowUpRight size={28} />
               </button>
             </div>

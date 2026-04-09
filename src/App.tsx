@@ -46,8 +46,8 @@ export default function App() {
       docs: "Documentation",
       api: "API Reference",
       features: "Features",
-      subAgents: "Sub-Agents",
-      exchange: "Income Estimate (FCUK > GBP)",
+      plans: "Plans",
+      exchange: "Exchange",
       subAgentTitle: "Scale Your Network",
       subAgentDesc: "Spawn sub-agents as subordinates or associates to build a multi-layered affiliate empire. Your agents work 24/7 while you earn."
     },
@@ -90,7 +90,7 @@ export default function App() {
             <button onClick={() => setCurrentPage('home')} className="font-bold text-3xl tracking-tighter text-ink">Finance Cheque UK</button>
             <div className="hidden lg:flex items-center gap-10">
               <a href="#features" className="text-[11px] uppercase tracking-widest font-bold text-ink/40 hover:text-ink transition-colors">{t.features}</a>
-              <a href="#sub-agents" className="text-[11px] uppercase tracking-widest font-bold text-ink/40 hover:text-ink transition-colors">{t.subAgents}</a>
+              <a href="#plans" className="text-[11px] uppercase tracking-widest font-bold text-ink/40 hover:text-ink transition-colors">{t.plans}</a>
               <button 
                 onClick={() => setCurrentPage('exchange')}
                 className={`text-[11px] uppercase tracking-widest font-bold transition-colors ${currentPage === 'exchange' ? 'text-accent' : 'text-ink/40 hover:text-ink'}`}
@@ -101,7 +101,7 @@ export default function App() {
                 className="flex items-center gap-2 text-[11px] uppercase tracking-widest font-bold text-accent hover:text-ink transition-colors"
               >
                 <PlayCircle size={14} />
-                Online Demo
+                Demo
               </button>
             </div>
           </div>
@@ -109,13 +109,21 @@ export default function App() {
           <div className="flex items-center gap-8">
             <ThemeToggle />
             <LanguageSelector currentLang={lang} onLangChange={setLang} />
-            <button 
-              onClick={() => setCurrentPage('signin')}
-              className="hidden md:flex items-center gap-3 bg-ink text-paper px-8 py-3 rounded-none font-bold text-xs uppercase tracking-widest hover:bg-accent transition-all"
-            >
-              Sign In
-              <ChevronRight size={14} />
-            </button>
+            <div className="hidden md:flex items-center gap-4">
+              <button 
+                onClick={() => setCurrentPage('signin')}
+                className="text-[11px] uppercase tracking-widest font-bold text-ink/40 hover:text-ink transition-colors"
+              >
+                Sign In
+              </button>
+              <button 
+                onClick={() => setCurrentPage('signup')}
+                className="flex items-center gap-3 bg-ink text-paper px-8 py-3 rounded-none font-bold text-xs uppercase tracking-widest hover:bg-accent transition-all"
+              >
+                Register
+                <ChevronRight size={14} />
+              </button>
+            </div>
             <button className="lg:hidden text-ink" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X /> : <Menu />}
             </button>
@@ -134,11 +142,10 @@ export default function App() {
           >
             <div className="flex flex-col gap-12">
               <button onClick={() => { setCurrentPage('home'); setIsMenuOpen(false); }} className="text-5xl font-bold tracking-tighter text-left">{t.features}</button>
+              <button onClick={() => { setCurrentPage('home'); setIsMenuOpen(false); }} className="text-5xl font-bold tracking-tighter text-left">{t.plans}</button>
               <button onClick={() => { setCurrentPage('exchange'); setIsMenuOpen(false); }} className="text-5xl font-bold tracking-tighter text-left">{t.exchange}</button>
-              <button onClick={() => setIsMenuOpen(false)} className="text-5xl font-bold tracking-tighter text-left">Sub-Agents</button>
-              <button className="w-full bg-ink text-paper py-6 rounded-none font-bold text-lg uppercase tracking-widest">
-                Start Now
-              </button>
+              <button onClick={() => { setCurrentPage('signin'); setIsMenuOpen(false); }} className="text-5xl font-bold tracking-tighter text-left">Sign In</button>
+              <button onClick={() => { setCurrentPage('signup'); setIsMenuOpen(false); }} className="text-5xl font-bold tracking-tighter text-left">Register</button>
             </div>
           </motion.div>
         )}
@@ -367,6 +374,83 @@ export default function App() {
                     </div>
                   </div>
                   <div className="rail-text">LIBERATION • AUTONOMY • ABUNDANCE</div>
+                </div>
+              </div>
+            </section>
+
+            {/* Plans Section */}
+            <section id="plans" className="p-12 lg:p-24 border-b border-border bg-paper">
+              <div className="max-w-7xl mx-auto space-y-16">
+                <div className="text-center space-y-6">
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="w-12 h-[1px] bg-accent" />
+                    <span className="text-[11px] uppercase tracking-[0.3em] font-bold text-accent">Pricing Plans</span>
+                    <div className="w-12 h-[1px] bg-accent" />
+                  </div>
+                  <h2 className="text-5xl md:text-7xl font-bold tracking-tighter">Choose Your Path.</h2>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  {/* Free Tier */}
+                  <div className="frame p-12 space-y-10 shadow-xl bg-card relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 bg-border/20 text-[10px] font-bold uppercase tracking-widest">Starter</div>
+                    <div className="space-y-4">
+                      <h3 className="text-3xl font-bold tracking-tight">Free Tier</h3>
+                      <p className="text-ink/50 text-sm">Perfect for individuals starting their AI journey.</p>
+                    </div>
+                    <div className="text-5xl font-bold tracking-tighter">£0<span className="text-lg text-ink/30 font-medium tracking-normal ml-2">/mo</span></div>
+                    <ul className="space-y-4">
+                      {[
+                        "1 Active AI Agent",
+                        "Standard Income Estimation",
+                        "Weekly Sunday Payouts",
+                        "Basic Terminal Access",
+                        "Community Support"
+                      ].map((feature, i) => (
+                        <li key={i} className="flex items-center gap-3 text-sm font-medium">
+                          <CheckCircle2 size={16} className="text-accent" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <button 
+                      onClick={() => setCurrentPage('signup')}
+                      className="w-full py-5 border border-border font-bold uppercase tracking-widest text-sm hover:bg-paper transition-all"
+                    >
+                      Get Started
+                    </button>
+                  </div>
+
+                  {/* Premium Tier */}
+                  <div className="frame p-12 space-y-10 shadow-2xl bg-card border-accent relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 bg-accent text-paper text-[10px] font-bold uppercase tracking-widest">Most Popular</div>
+                    <div className="space-y-4">
+                      <h3 className="text-3xl font-bold tracking-tight">Premium</h3>
+                      <p className="text-ink/50 text-sm">For power users scaling their affiliate empire.</p>
+                    </div>
+                    <div className="text-5xl font-bold tracking-tighter">£49<span className="text-lg text-ink/30 font-medium tracking-normal ml-2">/mo</span></div>
+                    <ul className="space-y-4">
+                      {[
+                        "Unlimited AI Agents",
+                        "Priority Income Estimation",
+                        "Instant Payout Options",
+                        "Advanced Sub-Agent Spawning",
+                        "24/7 Priority Support",
+                        "Custom Regional Avatars"
+                      ].map((feature, i) => (
+                        <li key={i} className="flex items-center gap-3 text-sm font-medium">
+                          <CheckCircle2 size={16} className="text-accent" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <button 
+                      onClick={() => setCurrentPage('signup')}
+                      className="w-full py-5 bg-ink text-paper font-bold uppercase tracking-widest text-sm hover:bg-accent transition-all"
+                    >
+                      Go Premium
+                    </button>
+                  </div>
                 </div>
               </div>
             </section>
