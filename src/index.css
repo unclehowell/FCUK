@@ -14,19 +14,100 @@
 
 @layer base {
   :root {
-    --paper: #0A0A0A;
-    --ink: #F5F5F4;
-    --border: #262626;
-    --card: #141414;
-    --accent: #60A5FA;
+    --paper: #191919;
+    --ink: #d4d4d4;
+    --border: #333333;
+    --card: #1f1f1f;
+    --accent: #87a9ff;
+    
+    /* V3 Theme Colors */
+    --v3-surface: #191919;
+    --v3-overlay-background: rgba(25, 25, 25, 0.3);
+    --v3-surface-left-nav: #191919;
+    --v3-surface-left-nav-border: #262626;
+    --v3-surface-container: #1f1f1f;
+    --v3-surface-container-high: #252525;
+    --v3-surface-container-highest: #2a2a2a;
+    --v3-button-container: #323232;
+    --v3-button-container-high: #424242;
+    --v3-button-container-highest: #555555;
+    --v3-button-container-accent: #393f51;
+    --v3-text-disable: #3e3e3e;
+    --v3-text-on-button: #fcfcfc;
+    --v3-text-on-button-reverse: #ffffff;
+    --v3-text: #d4d4d4;
+    --v3-text-var: #8c8c8c;
+    --v3-chat-separator: #8c8c8c;
+    --v3-text-link: #87a9ff;
+    --v3-outline: #333333;
+    --v3-outline-var: #262626;
+    --v3-outline-accent: #87a9ff;
+    --v3-error-text: #690005;
+    --v3-error-container: #ffdad6;
+    --v3-warning-text: #2a1700;
+    --v3-warning-container: #ffddb7;
+    --v3-hover: #323232;
+    --v3-accent-1: #fcbd00;
+    --v3-accent-light-1: #3a321b;
+    --v3-accent-2: #c597ff;
+    --v3-accent-light-2: #332d3a;
+    --v3-accent-3: #d73a49;
+    --v3-accent-4: #3ddb85;
+    --v3-accent-5: #8790ab;
+    --v3-accent-6: #ffb74d;
   }
 
   .light {
-    --paper: #F5F5F4;
-    --ink: #0A0A0A;
-    --border: #D6D6D4;
-    --card: #FFFFFF;
-    --accent: #3B82F6;
+    --paper: #ffffff;
+    --ink: #2b2d31;
+    --border: #e2e3e4;
+    --card: #ffffff;
+    --accent: #2483e2;
+
+    /* V3 Theme Colors Light */
+    --v3-surface: #ffffff;
+    --v3-overlay-background: rgba(252, 252, 252, 0.3);
+    --v3-surface-left-nav: #fafafa;
+    --v3-surface-left-nav-border: #e2e3e4;
+    --v3-surface-container: #ffffff;
+    --v3-surface-container-high: #fcfcfc;
+    --v3-surface-container-highest: #f4f5f5;
+    --v3-button-container: #ffffff;
+    --v3-button-container-high: #eaeaeb;
+    --v3-button-container-highest: #caccce;
+    --v3-button-container-accent: #dbeafe;
+    --v3-text-disable: #bdc1c6;
+    --v3-text-on-button: #2b2d31;
+    --v3-text-on-button-reverse: #ffffff;
+    --v3-text: #2b2d31;
+    --v3-text-var: #6c717a;
+    --v3-chat-separator: #b7babd;
+    --v3-text-link: #2483e2;
+    --v3-outline: #e2e3e4;
+    --v3-outline-var: #eaeaeb;
+    --v3-outline-accent: #2483e2;
+    --v3-error-text: #690005;
+    --v3-error-container: #ffdad6;
+    --v3-warning-text: #2a1700;
+    --v3-warning-container: #ffddb7;
+    --v3-hover: #f4f5f5;
+    --v3-accent-1: #fcbd00;
+    --v3-accent-light-1: #fff7e0;
+    --v3-accent-2: #c597ff;
+    --v3-accent-light-2: #f8f3ff;
+    --v3-accent-3: #d73a49;
+    --v3-accent-4: #3ca059;
+    --v3-accent-5: #7887b5;
+    --v3-accent-6: #e87400;
+  }
+
+  * {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  *::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
   }
 
   body {
@@ -74,4 +155,13 @@
 
 .animate-spin-slow {
   animation: spin-slow 12s linear infinite;
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); border-color: rgba(59, 130, 246, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(59, 130, 246, 1); border-color: rgba(59, 130, 246, 1); }
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
 }

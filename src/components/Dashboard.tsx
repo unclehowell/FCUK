@@ -275,7 +275,7 @@ export default function Dashboard({
           if (tourStep === 1) setTourStep(2);
           if (guideStep === 2) onGuideStepChange?.(3);
         }}
-        className={`${isSmall ? 'px-3 py-1.5' : 'px-6 py-3'} bg-paper/80 backdrop-blur-md border border-border text-xs font-bold uppercase tracking-[0.1em] flex items-center gap-3 rounded-full hover:bg-accent hover:text-paper transition-all`}
+        className={`${isSmall ? 'px-3 py-1.5' : 'px-6 py-3'} bg-paper/80 backdrop-blur-md border border-border text-xs font-bold uppercase tracking-[0.1em] flex items-center gap-3 rounded-full hover:bg-accent hover:text-paper transition-all ${guideStep === 2 && variant === 'mobile' ? 'animate-glow ring-2 ring-accent' : ''}`}
       >
         {(variant === 'full' || hasInteracted) ? (
           <>
@@ -303,9 +303,6 @@ export default function Dashboard({
           </div>
         )}
       </button>
-      {guideStep === 2 && variant === 'mobile' && (
-        <div className="absolute -left-10 top-1/2 -translate-y-1/2 w-8 h-8 bg-accent text-white rounded-full flex items-center justify-center text-xs font-bold animate-bounce shadow-lg">2</div>
-      )}
     </div>
   );
 

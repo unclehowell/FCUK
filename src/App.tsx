@@ -27,7 +27,10 @@ import {
   Link2,
   Facebook,
   Twitter,
-  Instagram
+  Instagram,
+  Mail,
+  MessageCircle,
+  Send
 } from 'lucide-react';
 import LanguageSelector, { Language } from './components/LanguageSelector';
 import AgentComputer from './components/AgentComputer';
@@ -38,8 +41,7 @@ import OAuthAnimation from './components/OAuthAnimation';
 
 import ThemeToggle from './components/ThemeToggle';
 import Exchange from './components/Exchange';
-import SignIn from './components/Auth/SignIn';
-import SignUp from './components/Auth/SignUp';
+import AuthModal from './components/Auth/AuthModal';
 import ForgotPassword from './components/Auth/ForgotPassword';
 import Dashboard from './components/Dashboard';
 import { Smartphone, Apple as AppleIcon, Monitor, PlayCircle, CreditCard } from 'lucide-react';
@@ -55,9 +57,47 @@ export default function App() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [demoOrientation, setDemoOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<'signin' | 'signup'>('signin');
+  const [showLogoutWarning, setShowLogoutWarning] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(90);
+  const [isDemo, setIsDemo] = useState(false);
+
+  useEffect(() => {
+    if (user && user.email === 'demo') {
+      setIsDemo(true);
+      setTimeLeft(90);
+    } else {
+      setIsDemo(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!isDemo) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setUser(null);
+          return 0;
+        }
+        if (prev === 31) {
+          setShowLogoutWarning(true);
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isDemo]);
   const [showWalletNotice, setShowWalletNotice] = useState(false);
-  const [demoAgents, setDemoAgents] = useState<{id: number, isOpen: boolean, balance: number, hasInteracted: boolean, title: string}[]>([
-    { id: 1, isOpen: false, balance: 0, hasInteracted: false, title: 'My FCUK Agent' }
+  const [demoAgents, setDemoAgents] = useState<{id: number, isOpen: boolean, balance: number, hasInteracted: boolean, title: string, isSpawned: boolean}[]>([
+    { id: 1, isOpen: false, balance: 0, hasInteracted: false, title: 'CEO', isSpawned: true },
+    { id: 2, isOpen: false, balance: 0, hasInteracted: false, title: 'Employee 1', isSpawned: false },
+    { id: 3, isOpen: false, balance: 0, hasInteracted: false, title: 'Employee 2', isSpawned: false }
   ]);
   const [showSpawnModal, setShowSpawnModal] = useState(false);
   const [spawnType, setSpawnType] = useState<'friend' | 'employee' | null>(null);
@@ -92,19 +132,20 @@ export default function App() {
       return;
     }
 
-    if (demoAgents.length >= 3) {
+    const nextAgent = demoAgents.find(a => !a.isSpawned);
+    if (!nextAgent) {
       setDemoPrompt('Sign in with the demo account to see more');
       setShowSpawnModal(false);
       return;
     }
-    const nextId = Math.max(...demoAgents.map(a => a.id), 0) + 1;
-    setDemoAgents([...demoAgents, { 
-      id: nextId, 
-      isOpen: false, 
-      balance: 0, 
-      hasInteracted: false,
-      title: `Employee ${nextId - 1}`
-    }]);
+
+    setDemoAgents(prev => prev.map(a => 
+      a.id === nextAgent.id 
+        ? { ...a, isSpawned: true, title: spawnType === 'employee' ? `Employee ${a.id - 1}` : a.title } 
+        : a
+    ));
+    
+    setDemoPrompt(spawnType === 'employee' ? 'New agent spawned' : 'Invitation sent');
     setShowSpawnModal(false);
     setSpawnType(null);
     if (guideStep === 7) setGuideStep(8);
@@ -112,7 +153,7 @@ export default function App() {
 
   const handleRemoveAgent = (id: number) => {
     if (id === 1) return; // Don't let the first agent be deleted
-    setDemoAgents(prev => prev.filter(a => a.id !== id));
+    setDemoAgents(prev => prev.map(a => a.id === id ? { ...a, isSpawned: false, isOpen: false } : a));
     if (activeAgentId === id) {
       setActiveAgentId(null);
     }
@@ -259,34 +300,27 @@ export default function App() {
       <nav className="fixed top-0 w-full z-[500] bg-black/80 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-[1800px] mx-auto px-8 h-24 flex items-center justify-between">
           <div className="flex items-center gap-16">
-            <button onClick={() => setCurrentPage('home')} className="flex items-center gap-6 group">
-              <div className="w-16 h-16 bg-white flex items-center justify-center rounded-none group-hover:scale-105 transition-transform overflow-hidden p-1 shadow-sm">
-                <img 
-                  src="https://images.squarespace-cdn.com/content/v1/61713d3d6e5d5e5e5e5e5e5e/1634811111111-XXXXXXXXXXXX/Logo.png" 
-                  alt="Finance Cheque UK Logo" 
-                  className="w-full h-full object-contain"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://picsum.photos/seed/finance/100/100';
-                  }}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <span className="font-bold text-3xl tracking-tighter text-white leading-none">FINANCE CHEQUE UK</span>
-                <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/80">Free Agentic A.I Employee</span>
-              </div>
+            <button onClick={() => setCurrentPage('home')} className="flex flex-col gap-2 group text-left">
+              <span className="font-bold text-3xl tracking-tighter text-white leading-none group-hover:text-accent transition-colors">FINANCE CHEQUE UK</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/80">Free, Fully Agentic, A.I Sales & Marketing Agent</span>
             </button>
           </div>
 
           <div className="flex items-center gap-8">
             {user ? (
-              <button 
-                onClick={() => setCurrentPage('home')}
-                className="hidden md:flex items-center gap-2 text-[11px] uppercase tracking-widest font-bold text-accent hover:text-white transition-colors"
-              >
-                <PlayCircle size={14} />
-                My Agent
-              </button>
+              <div className="hidden md:flex items-center gap-6">
+                <div className="flex flex-col items-center">
+                  <User size={20} className="text-accent" />
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-accent">CEO</span>
+                </div>
+                <div className="flex flex-col items-center opacity-30">
+                  <div className="relative">
+                    <User size={20} className="text-white" />
+                    <Plus size={8} className="absolute -top-1 -right-1 text-white" />
+                  </div>
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-white">Add</span>
+                </div>
+              </div>
             ) : null}
 
             <div className="relative">
@@ -345,14 +379,14 @@ export default function App() {
                     {!user ? (
                       <>
                         <button 
-                          onClick={() => { setCurrentPage('signin'); setIsWalletMenuOpen(false); }}
+                          onClick={() => { setAuthModalTab('signin'); setShowAuthModal(true); setIsWalletMenuOpen(false); }}
                           className="w-full flex items-center gap-3 p-3 hover:bg-card transition-colors text-xs font-bold text-ink/70"
                         >
                           <User size={16} />
                           Sign In
                         </button>
                         <button 
-                          onClick={() => { setCurrentPage('signup'); setIsWalletMenuOpen(false); }}
+                          onClick={() => { setAuthModalTab('signup'); setShowAuthModal(true); setIsWalletMenuOpen(false); }}
                           className="w-full flex items-center gap-3 p-3 hover:bg-card transition-colors text-xs font-bold text-ink/70"
                         >
                           <Users size={16} />
@@ -369,13 +403,15 @@ export default function App() {
                       </button>
                     )}
                     
-                    <button 
-                      onClick={() => { handleManageBilling(); setIsWalletMenuOpen(false); }}
-                      className="w-full flex items-center gap-3 p-3 hover:bg-card transition-colors text-xs font-bold text-ink/70"
-                    >
-                      <CreditCard size={16} />
-                      Billing
-                    </button>
+                    {user && user.email !== 'demo' && (
+                      <button 
+                        onClick={() => { handleManageBilling(); setIsWalletMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 p-3 hover:bg-card transition-colors text-xs font-bold text-ink/70"
+                      >
+                        <CreditCard size={16} />
+                        Billing
+                      </button>
+                    )}
                     
                     <div className="h-[1px] bg-border my-2" />
                     <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-ink/30">Navigation</div>
@@ -467,161 +503,185 @@ export default function App() {
               </div>
             </section>
           </div>
-        ) : currentPage === 'signin' ? (
-          <SignIn 
-            onBack={() => setCurrentPage('home')} 
-            onSignIn={(user) => {
-              setUser(user);
-              setDashboardKey(prev => prev + 1);
-              setCurrentPage('home');
-            }}
-          />
-        ) : currentPage === 'signup' ? (
-          <SignUp 
-            onBack={() => setCurrentPage('home')} 
-            onSignIn={() => setCurrentPage('signin')}
-            onSignUp={(user) => {
-              setUser(user);
-              setCurrentPage('home');
-            }}
-          />
         ) : currentPage === 'forgot-password' ? (
-          <ForgotPassword onBack={() => setCurrentPage('signin')} />
-        ) : user ? (
+          <ForgotPassword onBack={() => { setCurrentPage('home'); setShowAuthModal(true); }} />
+        ) : (user && user.email !== 'demo') ? (
           <div className="flex flex-col h-[calc(100vh-6rem)]">
             <Dashboard onSignOut={() => setUser(null)} variant="full" />
           </div>
         ) : (
-          <div className="flex flex-col h-[calc(100vh-6rem)] relative">
-            {/* Demo Manager UI */}
-            <div className="absolute inset-0 z-[200] pointer-events-none">
-              <div className="max-w-[1800px] mx-auto px-8 h-full grid grid-cols-3 gap-16 items-center">
-                {demoAgents.map((agent, index) => (
-                  <div 
-                    key={agent.id} 
-                    className={`flex flex-col gap-6 items-center pointer-events-auto ${
-                      index === 1 ? 'col-start-2' : ''
-                    }`}
-                  >
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="text-[10px] font-bold uppercase tracking-widest text-ink/40">{agent.title}</div>
+          <>
+            <div className="flex flex-col h-[calc(100vh-6rem)] relative">
+              {/* Demo Manager UI */}
+              <div className="absolute inset-0 z-[200] pointer-events-none overflow-y-auto">
+                <div className="max-w-[1800px] mx-auto px-8 py-24 min-h-full flex items-center justify-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-16 sm:gap-20 lg:gap-24 items-center justify-items-center w-full">
+                    {/* CEO Silhouette */}
+                    <div className="flex flex-col items-center gap-6 pointer-events-auto">
+                      {/* Silhouette */}
                       <div className="relative">
-                        {/* Miniaturized Tablet Icon (Sideways) */}
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => {
-                            if (guideStep === 0 && agent.id === 1) {
-                              handleOpenAgent(agent.id);
-                            } else {
-                              handleOpenAgent(agent.id);
-                            }
-                          }}
-                          className={`w-64 h-40 rounded-[2rem] bg-[#0a0a0a] border-4 border-[#1a1a1a] relative overflow-hidden shadow-2xl transition-all ${
-                            activeAgentId === agent.id && agent.isOpen 
-                              ? 'ring-4 ring-accent/20' 
-                              : 'hover:border-accent/50'
-                          }`}
+                          onClick={() => handleOpenAgent(1)}
+                          className={`w-32 h-32 rounded-full bg-[#0a0a0a] border-4 border-[#1a1a1a] relative overflow-hidden shadow-2xl transition-all flex items-center justify-center hover:border-accent/50`}
                         >
-                          {/* Screen Content - Loading Iframe */}
-                          <div className="absolute inset-2 rounded-[1.4rem] bg-paper overflow-hidden flex flex-col">
-                            <div className="h-3 bg-[#0a0a0a] flex items-center justify-center">
-                              <div className="w-12 h-1 bg-white/10 rounded-full" />
-                            </div>
-                            <div className="flex-1 relative bg-black">
-                              <iframe 
-                                src="https://ui.financecheque.uk" 
-                                className="w-full h-full border-none opacity-40 grayscale pointer-events-none scale-[0.25] origin-top-left"
-                                style={{ width: '400%', height: '400%' }}
-                                title={`Mini Agent ${agent.id}`}
-                              />
-                              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20">
-                                <Bot size={32} className="text-accent/40" />
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {guideStep === 0 && agent.id === 1 && (
+                          <User size={60} className="text-accent/20" />
+                          {guideStep === 0 && (
                             <div className="absolute inset-0 z-50 flex items-center justify-center bg-accent/20 backdrop-blur-[2px]">
-                              <div className="w-12 h-12 bg-accent text-white rounded-full flex items-center justify-center text-xl font-bold animate-bounce shadow-2xl">Start</div>
+                              <div className="w-12 h-12 bg-accent text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-bounce shadow-2xl">Start</div>
                             </div>
                           )}
                         </motion.button>
                       </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 w-72">
-                      <div className="flex flex-col gap-2">
-                        <div className="relative">
-                          <button 
-                            onClick={() => handleConnectAgent(agent.id)}
-                            disabled={guideStep !== 1 && agent.id === 1}
-                            className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-paper/80 backdrop-blur-md border border-border text-[9px] font-bold uppercase tracking-widest hover:bg-accent hover:text-white transition-all rounded-xl ${
-                              guideStep !== 1 && agent.id === 1 ? 'opacity-50 cursor-not-allowed' : ''
-                            }`}
-                          >
-                            <Link2 size={12} />
+
+                      {/* Controls Stack */}
+                      <div className="flex flex-col items-center gap-4 w-[200px]">
+                        <div className="flex items-center justify-center gap-3 w-full">
+                          <div className="flex items-center gap-1.5">
+                            <button 
+                              onClick={() => setShowContactModal(true)}
+                              className="hover:scale-110 transition-transform opacity-90 hover:opacity-100"
+                            >
+                              <Mail size={16} className="text-accent" />
+                            </button>
+                            <button 
+                              onClick={() => setShowContactModal(true)}
+                              className="hover:scale-110 transition-transform opacity-90 hover:opacity-100"
+                            >
+                              <img 
+                                src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" 
+                                alt="WhatsApp" 
+                                className="w-5 h-5 object-contain"
+                                referrerPolicy="no-referrer"
+                              />
+                            </button>
+                            <button 
+                              onClick={() => setShowContactModal(true)}
+                              className="hover:scale-110 transition-transform opacity-90 hover:opacity-100"
+                            >
+                              <img 
+                                src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" 
+                                alt="Telegram" 
+                                className="w-5 h-5 object-contain"
+                                referrerPolicy="no-referrer"
+                              />
+                            </button>
+                          </div>
+                          <div className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink/80 truncate whitespace-nowrap">CEO</div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 w-full">
+                          <button className="flex items-center justify-center gap-2 bg-card border border-border py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/40 hover:text-accent hover:border-accent transition-all">
+                            <Zap size={12} />
                             Connect
                           </button>
-                          {guideStep === 1 && agent.id === 1 && (
-                            <div className="absolute -left-12 top-1/2 -translate-y-1/2 w-10 h-10 bg-accent text-white rounded-full flex items-center justify-center text-xs font-bold animate-bounce shadow-lg">Step 1</div>
-                          )}
-                        </div>
-
-                        <div className="relative">
-                          <button 
-                            onClick={() => {
-                              setDemoPrompt('Sign in or Register to withdraw funds');
-                              if (guideStep === 6) setGuideStep(7);
-                            }}
-                            disabled={guideStep !== 6 && agent.id === 1}
-                            className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-ink text-paper text-[9px] font-bold uppercase tracking-widest hover:bg-accent transition-all rounded-xl ${
-                              guideStep !== 6 && agent.id === 1 ? 'opacity-50 cursor-not-allowed' : ''
-                            }`}
-                          >
+                          <button className="flex items-center justify-center gap-2 bg-card border border-border py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/40 hover:text-accent hover:border-accent transition-all">
                             <Coins size={12} />
-                            £{agent.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            Balance
                           </button>
-                          {guideStep === 6 && agent.id === 1 && (
-                            <div className="absolute -left-10 top-1/2 -translate-y-1/2 w-8 h-8 bg-accent text-white rounded-full flex items-center justify-center text-xs font-bold animate-bounce shadow-lg">6</div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        {agent.id !== 1 && (
-                          <button 
-                            onClick={() => handleRemoveAgent(agent.id)}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-red-500/10 border border-red-500/20 text-[9px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-500 hover:text-white transition-all rounded-xl"
-                          >
+                          <button className="flex items-center justify-center gap-2 bg-card border border-border py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/40 hover:text-accent hover:border-accent transition-all">
+                            <Plus size={12} />
+                            Spawn
+                          </button>
+                          <button className="flex items-center justify-center gap-2 bg-card border border-border py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/40 hover:text-accent hover:border-accent transition-all">
                             <X size={12} />
                             Remove
                           </button>
-                        )}
+                        </div>
+                      </div>
+                    </div>
 
-                        {/* Spawn Button - Only show after interaction */}
-                        {agent.hasInteracted && (
-                          <div className="relative">
-                            <button 
-                              onClick={handleSpawn}
-                              disabled={guideStep !== 7 && agent.id === 1}
-                              className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-accent text-white text-[9px] font-bold uppercase tracking-widest hover:bg-ink transition-all rounded-xl ${
-                                guideStep !== 7 && agent.id === 1 ? 'opacity-50 cursor-not-allowed' : ''
-                              }`}
-                            >
+                    {/* Add Agent Silhouettes */}
+                    {[2, 3, 4].map((id) => (
+                      <div key={id} className={`flex flex-col items-center gap-6 pointer-events-auto opacity-70 grayscale transition-all hover:opacity-100 hover:grayscale-0 ${id === 2 ? 'hidden sm:flex' : id === 3 ? 'hidden lg:flex' : 'hidden xl:flex'}`}>
+                        {/* Silhouette */}
+                        <div className="relative">
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                              if (!user) {
+                                setAuthModalTab('signup');
+                                setShowAuthModal(true);
+                              } else if (user.email === 'demo') {
+                                setShowPaymentModal(true);
+                              }
+                            }}
+                            className="w-32 h-32 rounded-full bg-[#0a0a0a]/30 border-4 border-[#1a1a1a] border-dashed relative overflow-hidden shadow-xl transition-all flex items-center justify-center hover:border-accent/50 group"
+                          >
+                            <div className="relative">
+                              <User size={60} className="text-accent/5 opacity-20" />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <Plus size={24} className="text-accent/40 group-hover:text-accent transition-colors" />
+                              </div>
+                            </div>
+                          </motion.button>
+                        </div>
+
+                        {/* Controls Stack */}
+                        <div className="flex flex-col items-center gap-4 w-[200px]">
+                          <div className="flex items-center justify-center gap-3 w-full">
+                            <div className="flex items-center gap-1.5">
+                              <button disabled className="opacity-50">
+                                <Mail size={16} className="text-accent" />
+                              </button>
+                              <button disabled className="opacity-50">
+                                <img 
+                                  src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" 
+                                  alt="WhatsApp" 
+                                  className="w-5 h-5 object-contain"
+                                  referrerPolicy="no-referrer"
+                                />
+                              </button>
+                              <button disabled className="opacity-50">
+                                <img 
+                                  src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" 
+                                  alt="Telegram" 
+                                  className="w-5 h-5 object-contain"
+                                  referrerPolicy="no-referrer"
+                                />
+                              </button>
+                            </div>
+                            <div className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink/40 truncate whitespace-nowrap">Add Agent</div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 w-full">
+                            <button disabled className="flex items-center justify-center gap-2 bg-card/50 border border-border/50 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/20">
+                              <Zap size={12} />
+                              Connect
+                            </button>
+                            <button disabled className="flex items-center justify-center gap-2 bg-card/50 border border-border/50 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/20">
+                              <Coins size={12} />
+                              Balance
+                            </button>
+                            <button disabled className="flex items-center justify-center gap-2 bg-card/50 border border-border/50 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/20">
                               <Plus size={12} />
                               Spawn
                             </button>
-                            {guideStep === 7 && agent.id === 1 && (
-                              <div className="absolute -right-10 top-1/2 -translate-y-1/2 w-8 h-8 bg-accent text-white rounded-full flex items-center justify-center text-xs font-bold animate-bounce shadow-lg">7</div>
-                            )}
+                            <button disabled className="flex items-center justify-center gap-2 bg-card/50 border border-border/50 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/20">
+                              <X size={12} />
+                              Remove
+                            </button>
                           </div>
-                        )}
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
+
+              <AuthModal 
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                initialTab={authModalTab}
+                onNavigate={(page) => setCurrentPage(page)}
+                onAuthSuccess={(user) => {
+                  setUser(user);
+                  setShowAuthModal(false);
+                  setDashboardKey(prev => prev + 1);
+                }}
+              />
 
               <AnimatePresence>
                 {demoPrompt && (
@@ -659,141 +719,201 @@ export default function App() {
                   }}
                 />
               ) : (
-                !forceConnect && !hasSelectedAgent && (
-                  <div className="text-center space-y-6">
-                    <div className="w-24 h-24 bg-accent/10 text-accent flex items-center justify-center rounded-full mx-auto animate-pulse">
-                      <Bot size={48} />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-2xl font-bold tracking-tighter">Select an Agent to Begin</h3>
-                      <p className="text-ink/40 text-sm max-w-xs mx-auto">Use the icons in the top left to spawn, open, and connect your agents.</p>
-                    </div>
-                  </div>
-                )
+                null
               )}
             </div>
-          </div>
+          </>
         )}
       </main>
-
-      {/* Spawn Modal */}
-      <AnimatePresence>
-        {showSpawnModal && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[600] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
-          >
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="w-full max-w-lg bg-paper border border-border p-10 space-y-8 shadow-2xl frame"
-            >
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-2xl text-ink">Scale Your Network</h3>
-                  <p className="text-[10px] text-ink/40 uppercase font-bold tracking-widest">Select Agent Type</p>
-                </div>
-                <button onClick={() => setShowSpawnModal(false)} className="text-ink/20 hover:text-ink">
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <button 
-                  onClick={() => setSpawnType('friend')}
-                  className={`p-8 border-2 transition-all text-left space-y-4 ${spawnType === 'friend' ? 'border-accent bg-accent/5' : 'border-border hover:border-accent/50'}`}
-                >
-                  <div className="w-12 h-12 bg-accent/10 text-accent flex items-center justify-center rounded-xl">
-                    <Users size={24} />
-                  </div>
-                  <div>
-                    <div className="font-bold text-lg">Friend / Family</div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-green-500">Free Invitation</div>
-                  </div>
-                  <p className="text-xs text-ink/50 leading-relaxed">Invite a contact to join the network. No agent is spawned locally.</p>
-                </button>
-
-                <button 
-                  onClick={() => setSpawnType('employee')}
-                  className={`p-8 border-2 transition-all text-left space-y-4 ${spawnType === 'employee' ? 'border-accent bg-accent/5' : 'border-border hover:border-accent/50'}`}
-                >
-                  <div className="w-12 h-12 bg-accent/10 text-accent flex items-center justify-center rounded-xl">
-                    <Bot size={24} />
-                  </div>
-                  <div>
-                    <div className="font-bold text-lg">Subordinate Agent</div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-accent">Employee Worker</div>
-                  </div>
-                  <p className="text-xs text-ink/50 leading-relaxed">Spawn a new automated worker to handle additional tasks.</p>
-                </button>
-              </div>
-
-              {spawnType === 'friend' && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 pt-6 border-t border-border">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-ink/30">Recipient Email</label>
-                    <input 
-                      type="email" 
-                      placeholder="friend@example.com"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      className="w-full bg-card border border-border px-4 py-3 text-sm font-medium focus:outline-none focus:border-accent"
-                    />
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-ink/30">Or Share Via</label>
-                    <div className="flex gap-4">
-                      {[Facebook, Twitter, Instagram, Globe].map((Icon, i) => (
-                        <button key={i} className="w-12 h-12 bg-card border border-border flex items-center justify-center text-ink/40 hover:text-accent hover:border-accent transition-all rounded-xl">
-                          <Icon size={20} />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              <button 
-                onClick={confirmSpawn}
-                disabled={!spawnType || (spawnType === 'friend' && !inviteEmail)}
-                className="w-full bg-ink text-paper font-bold py-5 uppercase tracking-widest text-sm hover:bg-accent transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-              >
-                Confirm Selection
-                <ArrowRight size={18} />
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <Compliance />
 
       {/* Demo Modal Removed - Now integrated into main view when logged in */}
 
       {!user && (
-        <footer className="bg-black text-white p-8 border-t border-white/10">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="flex items-center gap-4">
-              <div className="w-8 h-8 bg-accent flex items-center justify-center">
-                <Bot size={18} className="text-white" />
-              </div>
-              <span className="font-bold text-lg tracking-tighter">Finance Cheque UK</span>
-            </div>
-            
-            <p className="text-[10px] text-white/40 leading-relaxed text-center md:text-left">
-              DATRO CONSORTIUM LIMITED (13775817) • Unit 29 Highcroft Industrial Estate, Waterlooville, PO8 0BT • 02031377118
+        <footer className="bg-black text-white/40 p-6 border-t border-white/5">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <span className="font-bold text-sm tracking-tighter text-white/60">Finance Cheque UK</span>
+            <p className="text-[9px] uppercase tracking-widest">
+              DATRO CONSORTIUM LIMITED • Waterlooville, PO8 0BT • 02031377118
             </p>
-
-            <div className="flex gap-6">
-              <button onClick={() => setCurrentPage('docs')} className="text-[10px] font-bold uppercase tracking-widest hover:text-accent transition-colors">Docs</button>
-              <button onClick={() => setCurrentPage('exchange')} className="text-[10px] font-bold uppercase tracking-widest hover:text-accent transition-colors">Exchange</button>
-              <button className="text-[10px] font-bold uppercase tracking-widest hover:text-accent transition-colors">Legal</button>
+            <div className="flex gap-4">
+              <button onClick={() => setCurrentPage('docs')} className="text-[9px] font-bold uppercase tracking-widest hover:text-accent transition-colors">Docs</button>
+              <button onClick={() => setCurrentPage('exchange')} className="text-[9px] font-bold uppercase tracking-widest hover:text-accent transition-colors">Exchange</button>
             </div>
           </div>
         </footer>
+      )}
+
+      {/* Modals */}
+      <AnimatePresence>
+        {showContactModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-full max-w-sm bg-paper border border-border p-10 space-y-8 shadow-2xl frame text-center"
+            >
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 bg-accent/10 text-accent flex items-center justify-center rounded-full">
+                  <User size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-ink">Sign in to speak to your free agent</h3>
+              </div>
+              <button 
+                onClick={() => setShowContactModal(false)}
+                className="w-full bg-ink text-paper font-bold py-4 uppercase tracking-widest text-xs hover:bg-accent transition-all"
+              >
+                Close
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {showLogoutWarning && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-full max-w-sm bg-paper border border-border p-10 space-y-8 shadow-2xl frame text-center"
+            >
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 bg-red-500/10 text-red-500 flex items-center justify-center rounded-full">
+                  <Bell size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-ink">Session Expiring</h3>
+                <p className="text-sm text-ink/60">You will be logged out in {timeLeft} seconds.</p>
+              </div>
+              <button 
+                onClick={() => setShowLogoutWarning(false)}
+                className="w-full bg-ink text-paper font-bold py-4 uppercase tracking-widest text-xs hover:bg-accent transition-all"
+              >
+                Continue Demo
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {showPaymentModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-full max-w-4xl bg-paper border border-border p-12 space-y-12 shadow-2xl frame"
+            >
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <h3 className="text-3xl font-bold text-ink tracking-tighter">Select Package</h3>
+                  <p className="text-[10px] text-ink/40 uppercase font-bold tracking-widest">Scale Your Agentic Network</p>
+                </div>
+                <button onClick={() => setShowPaymentModal(false)} className="text-ink/20 hover:text-ink">
+                  <X size={32} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-8">
+                {/* Personal Package */}
+                <div className="p-8 border border-border bg-card space-y-8 flex flex-col">
+                  <div className="space-y-4">
+                    <div className="w-12 h-12 bg-accent/10 text-accent flex items-center justify-center rounded-xl">
+                      <Users size={24} />
+                    </div>
+                    <h4 className="text-xl font-bold text-ink">Personal Package</h4>
+                    <p className="text-sm text-ink/60 leading-relaxed">
+                      Free agent for friends and family. Share your success across social platforms.
+                    </p>
+                  </div>
+                  <div className="flex-1 space-y-4">
+                    <div className="flex items-center gap-3 text-xs font-bold text-ink/80">
+                      <CheckCircle2 size={16} className="text-green-500" />
+                      Social Media Sharing
+                    </div>
+                    <div className="flex items-center gap-3 text-xs font-bold text-ink/80">
+                      <CheckCircle2 size={16} className="text-green-500" />
+                      Email Distribution
+                    </div>
+                    <div className="flex items-center gap-3 text-xs font-bold text-ink/80">
+                      <CheckCircle2 size={16} className="text-green-500" />
+                      Free Forever
+                    </div>
+                  </div>
+                  <div className="pt-8 space-y-4">
+                    <div className="flex items-center gap-4 justify-center">
+                      <button className="p-3 bg-blue-500 text-white rounded-full hover:scale-110 transition-transform">
+                        <Facebook size={20} />
+                      </button>
+                      <button className="p-3 bg-sky-400 text-white rounded-full hover:scale-110 transition-transform">
+                        <Twitter size={20} />
+                      </button>
+                      <button className="p-3 bg-ink text-white rounded-full hover:scale-110 transition-transform">
+                        <Mail size={20} />
+                      </button>
+                    </div>
+                    <button className="w-full bg-accent text-white font-bold py-5 uppercase tracking-widest text-xs hover:bg-ink transition-all">
+                      Select Personal
+                    </button>
+                  </div>
+                </div>
+
+                {/* Business Package */}
+                <div className="p-8 border-2 border-accent bg-accent/5 space-y-8 flex flex-col relative">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-accent text-white px-4 py-1 text-[10px] font-bold uppercase tracking-widest">Recommended</div>
+                  <div className="space-y-4">
+                    <div className="w-12 h-12 bg-accent text-white flex items-center justify-center rounded-xl">
+                      <Shield size={24} />
+                    </div>
+                    <h4 className="text-xl font-bold text-ink">Business Package</h4>
+                    <p className="text-sm text-ink/60 leading-relaxed">
+                      Create a subordinate agent to the existing CEO agent. Full commercial rights.
+                    </p>
+                  </div>
+                  <div className="flex-1 space-y-4">
+                    <div className="flex items-center gap-3 text-xs font-bold text-ink/80">
+                      <CheckCircle2 size={16} className="text-green-500" />
+                      Subordinate Agent Logic
+                    </div>
+                    <div className="flex items-center gap-3 text-xs font-bold text-ink/80">
+                      <CheckCircle2 size={16} className="text-green-500" />
+                      Advanced Sales Funnels
+                    </div>
+                    <div className="flex items-center gap-3 text-xs font-bold text-ink/80">
+                      <CheckCircle2 size={16} className="text-green-500" />
+                      Priority Support
+                    </div>
+                  </div>
+                  <div className="pt-8">
+                    <button className="w-full bg-ink text-paper font-bold py-5 uppercase tracking-widest text-xs hover:bg-accent transition-all">
+                      Unlock Business - £49/mo
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {isDemo && (
+        <div className="fixed bottom-8 left-8 z-[1000] flex items-center gap-3 bg-black/80 backdrop-blur-md border border-white/10 px-6 py-3 rounded-full">
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Demo</span>
+          <span className="text-xs font-mono text-white font-bold">{Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
+        </div>
       )}
     </div>
   );
