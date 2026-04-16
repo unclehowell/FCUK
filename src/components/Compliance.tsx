@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Shield, Cookie } from 'lucide-react';
 
-export default function Compliance() {
+interface ComplianceProps {
+  onAccept?: () => void;
+}
+
+export default function Compliance({ onAccept }: ComplianceProps) {
   const [showCookies, setShowCookies] = useState(false);
 
   useEffect(() => {
@@ -15,6 +19,7 @@ export default function Compliance() {
   const acceptCookies = () => {
     localStorage.setItem('fcuk-cookie-consent', 'true');
     setShowCookies(false);
+    onAccept?.();
   };
 
   return (

@@ -23,6 +23,7 @@ import {
   ChevronDown,
   User,
   Plus,
+  Phone,
   ExternalLink,
   Link2,
   Facebook,
@@ -120,6 +121,9 @@ export default function App() {
   const [showLogoutWarning, setShowLogoutWarning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(90);
   const [isDemo, setIsDemo] = useState(false);
+  const [cookiesAccepted, setCookiesAccepted] = useState(() => {
+    return localStorage.getItem('fcuk-cookie-consent') === 'true';
+  });
 
   useEffect(() => {
     if (user && user.email === 'demo') {
@@ -164,6 +168,7 @@ export default function App() {
   const [activeAgentId, setActiveAgentId] = useState<number | null>(null);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [walletBalance, setWalletBalance] = useState(0.00);
+  const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
   const [forceConnect, setForceConnect] = useState(false);
 
   const [hasSelectedAgent, setHasSelectedAgent] = useState(false);
@@ -238,7 +243,7 @@ export default function App() {
     }
     setActiveAgentId(id);
     setShowConnectionsModal(true);
-    if (onboardingStep === 1) setOnboardingStep(2);
+    if (onboardingStep === 2) setOnboardingStep(3);
   };
 
   const playDing = () => {
@@ -247,6 +252,8 @@ export default function App() {
   };
 
   const handleAgentAuthorize = (id: number, amount: number) => {
+    if (!activeOAuth) return;
+    const platform = activeOAuth.platform;
     setIsOAuthLoading(true);
     setTimeout(() => {
       setDemoAgents(prev => prev.map(a => 
@@ -257,12 +264,17 @@ export default function App() {
         playDing();
         return newBalance;
       });
+      setConnectedPlatforms(prev => [...prev, platform]);
       setIsOAuthLoading(false);
       setActiveOAuth(null);
-      if (onboardingStep === 3) {
-        setOnboardingStep(4);
+      if (onboardingStep === 4) {
+        setOnboardingStep(5);
       }
     }, 1500);
+  };
+
+  const handleDisconnect = (platform: string) => {
+    setConnectedPlatforms(prev => prev.filter(p => p !== platform));
   };
 
   const isDemoUser = user?.email === 'demo';
@@ -404,9 +416,15 @@ export default function App() {
 
             <div className="relative">
               <button 
-                onClick={() => setIsWalletMenuOpen(!isWalletMenuOpen)}
-                className="flex items-center gap-3 bg-white text-black px-8 py-3 rounded-none font-bold text-xs uppercase tracking-widest hover:bg-accent hover:text-white transition-all"
+                onClick={() => {
+                  setIsWalletMenuOpen(!isWalletMenuOpen);
+                  if (onboardingStep === 7) setOnboardingStep(8);
+                }}
+                className="flex items-center gap-3 bg-white text-black px-8 py-3 rounded-none font-bold text-xs uppercase tracking-widest hover:bg-accent hover:text-white transition-all relative"
               >
+                {onboardingStep === 7 && cookiesAccepted && (
+                  <div className="absolute -left-2 -top-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-bounce shadow-lg z-50">5</div>
+                )}
                 <Menu size={16} />
                 Menu
                 <ChevronDown size={14} className={`transition-transform ${isWalletMenuOpen ? 'rotate-180' : ''}`} />
@@ -439,8 +457,8 @@ export default function App() {
                           >
                             Exchange
                           </button>
-                          {onboardingStep === 4 && user?.email === 'demo' && (
-                            <div className="absolute -left-2 -top-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-bounce shadow-lg z-50">Step 5</div>
+                          {onboardingStep === 4 && user?.email === 'demo' && cookiesAccepted && (
+                            <div className="absolute -left-2 -top-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-bounce shadow-lg z-50">5</div>
                           )}
                         </div>
 
@@ -608,15 +626,26 @@ export default function App() {
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => handleOpenAgent(1)}
-                          className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-[#0a0a0a] border-4 border-[#1a1a1a] relative overflow-hidden shadow-2xl transition-all flex items-center justify-center hover:border-accent/50`}
-                        >
-                          {demoAgents[0].isAnswered ? <SineWave /> : <RingingPhone />}
-                          {onboardingStep === 0 && !user && (
-                            <div className="absolute inset-0 z-50 flex items-center justify-center bg-accent/20 backdrop-blur-[2px]">
-                              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent text-white rounded-full flex items-center justify-center text-[8px] sm:text-[10px] font-bold animate-bounce shadow-2xl">Step 1</div>
+                          className="w-24 h-24 sm:w-32 sm:h-32 rounded-full relative overflow-hidden shadow-2xl transition-all flex items-center justify-center"
+                          style={{ 
+                            backgroundImage: 'url(input_file_0.png)',
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            border: 'none'
+                          }}
+                        />
+                        {onboardingStep === 0 && !user && cookiesAccepted && (
+                          <motion.button 
+                            onClick={() => handleOpenAgent(1)}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-50"
+                          >
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent text-white rounded-full flex items-center justify-center animate-bounce shadow-2xl">
+                              <Phone size={16} />
                             </div>
-                          )}
-                        </motion.button>
+                          </motion.button>
+                        )}
                       </div>
 
                       {/* Controls Stack */}
@@ -655,50 +684,57 @@ export default function App() {
                           <div className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink/80 truncate whitespace-nowrap">CEO</div>
                         </div>
 
-                          <div className="grid grid-cols-2 gap-2 w-full">
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleConnectAgent(1);
-                              }}
-                              className="flex items-center justify-center gap-2 bg-accent text-white py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-ink transition-all shadow-lg active:scale-95 pointer-events-auto"
-                            >
-                              <Zap size={14} />
-                              Connect
-                            </button>
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (demoAgents[0].balance > 0) {
-                                  setCurrentPage('exchange');
-                                }
-                              }}
-                              className="flex items-center justify-center gap-2 bg-card border border-border py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest text-ink/40 hover:text-accent hover:border-accent transition-all pointer-events-auto"
-                            >
-                              <Coins size={14} />
-                              {demoAgents[0].balance.toFixed(2)}
-                            </button>
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleSpawn();
-                              }}
-                              className="flex items-center justify-center gap-2 bg-card border border-border py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/40 hover:text-accent hover:border-accent transition-all pointer-events-auto"
-                            >
-                              <Plus size={12} />
-                              Spawn
-                            </button>
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveAgent(1);
-                              }}
-                              className="flex items-center justify-center gap-2 bg-card border border-border py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/40 hover:text-accent hover:border-accent transition-all pointer-events-auto"
-                            >
-                              <X size={12} />
-                              Remove
-                            </button>
-                          </div>
+                        <div className="grid grid-cols-2 gap-2 w-full">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleConnectAgent(1);
+                            }}
+                            className="flex items-center justify-center gap-2 bg-accent text-white py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-ink transition-all shadow-lg active:scale-95 pointer-events-auto relative"
+                          >
+                            {onboardingStep === 2 && cookiesAccepted && (
+                              <div className="absolute -left-2 -top-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-bounce shadow-lg z-50">2</div>
+                            )}
+                            <Zap size={14} />
+                            Connect
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (demoAgents[0].balance > 0) {
+                                setCurrentPage('exchange');
+                                if (onboardingStep === 5) setOnboardingStep(6);
+                              }
+                            }}
+                            className="flex items-center justify-center gap-2 bg-card border border-border py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest text-ink/40 hover:text-accent hover:border-accent transition-all pointer-events-auto relative"
+                          >
+                            {onboardingStep === 5 && cookiesAccepted && (
+                              <div className="absolute -left-2 -top-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-bounce shadow-lg z-50">4</div>
+                            )}
+                            <Coins size={14} />
+                            {demoAgents[0].balance.toFixed(2)}
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSpawn();
+                            }}
+                            className="flex items-center justify-center gap-2 bg-card border border-border py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/40 hover:text-accent hover:border-accent transition-all pointer-events-auto"
+                          >
+                            <Plus size={12} />
+                            Spawn
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveAgent(1);
+                            }}
+                            className="flex items-center justify-center gap-2 bg-card border border-border py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/40 hover:text-accent hover:border-accent transition-all pointer-events-auto"
+                          >
+                            <X size={12} />
+                            Remove
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -822,9 +858,14 @@ export default function App() {
               <ConnectionsModal 
             isOpen={showConnectionsModal}
             onClose={() => setShowConnectionsModal(false)}
+            onboardingStep={onboardingStep}
+            cookiesAccepted={cookiesAccepted}
+            connectedPlatforms={connectedPlatforms}
+            onDisconnect={handleDisconnect}
             onSelect={(platform, icon) => {
               setShowConnectionsModal(false);
               setActiveOAuth({ platform, icon });
+              if (onboardingStep === 3) setOnboardingStep(4);
             }}
           />
 
@@ -864,29 +905,8 @@ export default function App() {
                         <span className="text-[10px] font-bold uppercase tracking-widest">Secure Connection</span>
                       </div>
                       <p className="text-xs text-ink/60 leading-relaxed">
-                        This agent requires permission to analyze your {activeOAuth.platform} distribution footprint to optimize affiliate campaigns.
+                        This agent requires permission.
                       </p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-ink/30">Username</label>
-                        <input 
-                          type="text" 
-                          value="demo" 
-                          readOnly 
-                          className="w-full bg-card border border-border px-4 py-3 text-sm font-medium focus:outline-none"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-ink/30">Password</label>
-                        <input 
-                          type="password" 
-                          value="demo" 
-                          readOnly 
-                          className="w-full bg-card border border-border px-4 py-3 text-sm font-medium focus:outline-none"
-                        />
-                      </div>
                     </div>
 
                     <div className="relative">
@@ -897,13 +917,16 @@ export default function App() {
                           }
                         }}
                         disabled={isOAuthLoading}
-                        className="w-full bg-ink text-paper font-bold py-5 uppercase tracking-widest text-sm hover:bg-accent transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                        className="w-full bg-ink text-paper font-bold py-5 uppercase tracking-widest text-sm hover:bg-accent transition-all flex items-center justify-center gap-3 disabled:opacity-50 relative"
                       >
+                        {onboardingStep === 3 && cookiesAccepted && (
+                          <div className="absolute -left-2 -top-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-bounce shadow-lg z-50">4</div>
+                        )}
                         {isOAuthLoading ? (
                           <div className="w-5 h-5 border-2 border-paper/30 border-t-paper rounded-full animate-spin" />
                         ) : (
                           <>
-                            Authorize Agent
+                            Authorise
                             <ArrowRight size={18} />
                           </>
                         )}
@@ -931,46 +954,7 @@ export default function App() {
               />
 
               <AnimatePresence>
-                {!user && onboardingStep < 5 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 20 }}
-                    className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[1000] bg-ink text-paper px-6 py-4 rounded-2xl shadow-2xl flex flex-col items-center gap-2 text-center w-[calc(100%-2rem)] max-w-[360px] border border-white/10"
-                  >
-                    <div className="absolute top-2 right-2 flex items-center gap-2">
-                      <button 
-                        onClick={() => setOnboardingStep(onboardingStep + 1)}
-                        className="p-1 hover:text-accent transition-colors"
-                        title="Close step"
-                      >
-                        <X size={14} />
-                      </button>
-                      <button 
-                        onClick={() => setOnboardingStep(5)}
-                        className="p-1 hover:text-red-500 transition-colors"
-                        title="Stop guide"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-accent">Onboarding Guide</p>
-                    <p className="text-xs font-medium leading-tight pr-8">
-                      {onboardingStep === 0 && "Step 1: Click on the Agent 1 profile to begin."}
-                      {onboardingStep === 1 && "Step 2: Click the 'Menu' button in the dashboard."}
-                      {onboardingStep === 2 && "Step 3: Choose 'Gmail' in the Connections menu."}
-                      {onboardingStep === 3 && "Step 4: Authorise the OAuth to earn credits."}
-                      {onboardingStep === 4 && "Step 5: Click your wallet balance in the menu to exchange."}
-                    </p>
-                    <div className="w-full bg-white/10 h-1 rounded-full mt-1 overflow-hidden">
-                      <motion.div 
-                        className="bg-accent h-full"
-                        initial={{ width: "0%" }}
-                        animate={{ width: `${(onboardingStep / 5) * 100}%` }}
-                      />
-                    </div>
-                  </motion.div>
-                )}
+                {/* Onboarding guide box removed - markers are used instead */}
               </AnimatePresence>
             </div>
 
@@ -982,6 +966,7 @@ export default function App() {
                   onClose={() => {
                     setDemoAgents(prev => prev.map(a => ({ ...a, isOpen: false })));
                     setForceConnect(false);
+                    if (onboardingStep === 1) setOnboardingStep(2);
                   }}
                   onNavigate={(page) => setCurrentPage(page)}
                   onAuthRequired={() => {
@@ -1008,7 +993,7 @@ export default function App() {
         )}
       </main>
 
-      <Compliance />
+      <Compliance onAccept={() => setCookiesAccepted(true)} />
 
       {/* Demo Modal Removed - Now integrated into main view when logged in */}
 

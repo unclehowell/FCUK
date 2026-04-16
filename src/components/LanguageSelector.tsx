@@ -28,7 +28,7 @@ export default function LanguageSelector({ currentLang, onLangChange }: Language
       </button>
       
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-32 bg-white border border-border rounded-xl shadow-xl overflow-hidden z-50">
+        <div className="absolute right-0 mt-2 w-32 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50">
           {Object.entries(languages).map(([code, name]) => (
             <button
               key={code}
@@ -36,7 +36,7 @@ export default function LanguageSelector({ currentLang, onLangChange }: Language
                 onLangChange(code as Language);
                 setIsOpen(false);
               }}
-              className="w-full text-left px-4 py-2.5 text-xs font-medium hover:bg-paper transition-colors"
+              className="w-full text-left px-4 py-2.5 text-xs font-medium hover:bg-paper transition-colors text-ink"
             >
               {name}
             </button>
