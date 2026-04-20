@@ -8,13 +8,40 @@ export default function ThemeToggle() {
     // Check system preference or stored preference
     const storedTheme = localStorage.getItem('theme');
     
-    if (storedTheme === 'light') {
-      setIsDark(false);
-      document.documentElement.classList.remove('dark');
+    if (storedTheme) {
+      if (storedTheme === 'light') {
+        setIsDark(false);
+        document.documentElement.classList.remove('dark');
+      } else {
+        setIsDark(true);
+        document.documentElement.classList.add('dark');
+      }
     } else {
-      setIsDark(true);
-      document.documentElement.classList.add('dark');
+      // If no stored preference, match system visitor's browser
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDark(systemPrefersDark);
+      if (systemPrefersDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
+
+    // Listen for system changes if no manual toggle has been used
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      if (!localStorage.getItem('theme')) {
+        setIsDark(e.matches);
+        if (e.matches) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   const toggleTheme = () => {

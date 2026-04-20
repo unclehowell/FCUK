@@ -39,7 +39,7 @@ export default function Compliance({ onAccept }: ComplianceProps) {
               <div className="flex-1">
                 <h3 className="font-bold text-lg mb-1 text-ink">Cookie Notice</h3>
                 <p className="text-xs text-ink/60 mb-4 leading-relaxed">
-                  We use cookies to ensure your AI agent performs at peak efficiency. By continuing to browse Finance Cheque UK, you agree to our use of cookies and data processing in accordance with UK GDPR.
+                  We use cookies to ensure your AI agent performs at peak efficiency. By continuing to browse Finance Cheque UK (FCUK), you agree to our use of cookies and data processing in accordance with UK GDPR.
                 </p>
                 <div className="flex gap-3">
                   <button

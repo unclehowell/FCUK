@@ -32,7 +32,9 @@ import {
   Mail,
   MessageCircle,
   Send,
-  Trash2
+  Trash2,
+  Copy,
+  Check
 } from 'lucide-react';
 import LanguageSelector, { Language } from './components/LanguageSelector';
 import AgentComputer from './components/AgentComputer';
@@ -111,6 +113,9 @@ export default function App() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [demoOrientation, setDemoOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
+  const [isFreeMenuOpen, setIsFreeMenuOpen] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
+  const [copyStatus, setCopyStatus] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -392,7 +397,7 @@ export default function App() {
               <span className="font-bold text-xl sm:text-3xl tracking-tighter text-white leading-none group-hover:text-accent transition-colors">FINANCE CHEQUE UK</span>
               <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/80">
                 <span className="sm:hidden">marketing Agent</span>
-                <span className="hidden sm:inline">Free, Fully Agentic, A.I Sales & Marketing Agent</span>
+                <span className="hidden sm:inline">Universal Agentic A.I Agent</span>
               </span>
             </button>
           </div>
@@ -414,21 +419,32 @@ export default function App() {
               </div>
             ) : null}
 
-            <div className="relative">
+            <div className="flex items-center gap-4">
               <button 
                 onClick={() => {
-                  setIsWalletMenuOpen(!isWalletMenuOpen);
-                  if (onboardingStep === 7) setOnboardingStep(8);
+                  setShowInstallModal(true);
+                  setIsWalletMenuOpen(false);
                 }}
-                className="flex items-center gap-3 bg-white text-black px-8 py-3 rounded-none font-bold text-xs uppercase tracking-widest hover:bg-accent hover:text-white transition-all relative"
+                className="bg-paper border border-border text-ink px-8 py-3 rounded-none font-bold text-xs uppercase tracking-widest hover:bg-accent hover:text-white transition-all"
               >
-                {onboardingStep === 7 && cookiesAccepted && (
-                  <div className="absolute -left-2 -top-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-bounce shadow-lg z-50">5</div>
-                )}
-                <Menu size={16} />
-                Menu
-                <ChevronDown size={14} className={`transition-transform ${isWalletMenuOpen ? 'rotate-180' : ''}`} />
+                Free
               </button>
+
+              <div className="relative">
+                <button 
+                  onClick={() => {
+                    setIsWalletMenuOpen(!isWalletMenuOpen);
+                    if (onboardingStep === 7) setOnboardingStep(8);
+                  }}
+                  className="flex items-center gap-3 bg-white text-black px-8 py-3 rounded-none font-bold text-xs uppercase tracking-widest hover:bg-accent hover:text-white transition-all relative"
+                >
+                  {onboardingStep === 7 && cookiesAccepted && (
+                    <div className="absolute -left-2 -top-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-bounce shadow-lg z-50">5</div>
+                  )}
+                  <Menu size={16} />
+                  Enterprise
+                  <ChevronDown size={14} className={`transition-transform ${isWalletMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
 
               <AnimatePresence>
                 {isWalletMenuOpen && (
@@ -542,9 +558,64 @@ export default function App() {
             </div>
           </div>
         </div>
-      </nav>
+      </div>
+    </nav>
 
       {/* Mobile Menu Removed - Wallet Menu Replaces It */}
+
+      {/* Install Modal */}
+      <AnimatePresence>
+        {showInstallModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-2xl bg-paper border border-border p-10 space-y-8 shadow-2xl relative"
+            >
+              <button 
+                onClick={() => setShowInstallModal(false)}
+                className="absolute top-6 right-6 text-ink/20 hover:text-ink transition-colors"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="space-y-4">
+                <h2 className="text-3xl font-bold tracking-tighter">Install Finance Cheque UK (FCUK)</h2>
+                <p className="text-xs text-ink/40 font-bold uppercase tracking-widest">Run this one-liner in your terminal to get started for free.</p>
+                
+                <div className="relative group">
+                  <div className="bg-ink text-paper p-6 font-mono text-sm leading-relaxed overflow-x-auto rounded-none border border-white/10 pr-16">
+                    curl -fsSL https://pirateclaw.datro.xyz/install.sh | sh
+                  </div>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText('curl -fsSL https://pirateclaw.datro.xyz/install.sh | sh');
+                      setCopyStatus(true);
+                      setTimeout(() => setCopyStatus(false), 2000);
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white transition-colors rounded-none"
+                  >
+                    {copyStatus ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
+                  </button>
+                </div>
+
+                <div className="p-4 bg-accent/5 border border-accent/10 flex items-start gap-4">
+                  <Shield size={20} className="text-accent mt-0.5" />
+                  <p className="text-[10px] text-ink/60 leading-relaxed font-medium uppercase tracking-wider">
+                    This script installs the FCUK binary and sets up your local environment for decentralized campaign management.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <main className="pt-24">
         {currentPage === 'exchange' ? (
@@ -560,7 +631,7 @@ export default function App() {
         ) : currentPage === 'docs' ? (
           <div className="max-w-4xl mx-auto p-12 lg:p-24 space-y-16">
             <section className="space-y-8">
-              <h2 className="text-5xl font-bold tracking-tighter">How Finance Cheque UK Works.</h2>
+              <h2 className="text-5xl font-bold tracking-tighter">How Finance Cheque UK (FCUK) Works.</h2>
               <p className="text-lg text-ink/60 leading-relaxed">
                 We partner with verified affiliate networks. Your agent operates within these ecosystems to generate real-world value.
               </p>
@@ -1000,7 +1071,7 @@ export default function App() {
       {!user && (
         <footer className="bg-black text-white/40 p-6 border-t border-white/5">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <span className="font-bold text-sm tracking-tighter text-white/60">Finance Cheque UK</span>
+            <span className="font-bold text-sm tracking-tighter text-white/60">Finance Cheque UK (FCUK)</span>
             <p className="text-[9px] uppercase tracking-widest">
               DATRO CONSORTIUM LIMITED • Waterlooville, PO8 0BT • 02031377118
             </p>
