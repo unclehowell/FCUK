@@ -74,7 +74,7 @@ export default function AvatarSection() {
             <div className="flex items-center gap-4">
               <div className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse" />
               <div>
-                <h3 className="font-bold text-lg text-ink leading-none">Agent EVE-01</h3>
+                <h3 className="font-bold text-lg text-ink leading-none">Stacey</h3>
                 <p className="text-[11px] font-bold text-accent/60 uppercase tracking-widest mt-1">Status: Online</p>
               </div>
             </div>

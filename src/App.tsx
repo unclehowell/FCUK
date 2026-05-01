@@ -34,7 +34,13 @@ import {
   Send,
   Trash2,
   Copy,
-  Check
+  Check,
+  Wallet,
+  FileText,
+  Info,
+  Linkedin,
+  Sun,
+  Moon
 } from 'lucide-react';
 import LanguageSelector, { Language } from './components/LanguageSelector';
 import AgentComputer from './components/AgentComputer';
@@ -126,9 +132,38 @@ export default function App() {
   const [showLogoutWarning, setShowLogoutWarning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(90);
   const [isDemo, setIsDemo] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('fcuk-theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'dark';
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme);
+    localStorage.setItem('fcuk-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  const [showJointVentureTooltip, setShowJointVentureTooltip] = useState(false);
   const [cookiesAccepted, setCookiesAccepted] = useState(() => {
     return localStorage.getItem('fcuk-cookie-consent') === 'true';
   });
+
+  // Buyer Form State
+  const [buyerWebsiteUrl, setBuyerWebsiteUrl] = useState('');
+  const [payPerLead, setPayPerLead] = useState('');
+  const [leadCount, setLeadCount] = useState('');
+  const [buyerBalance, setBuyerBalance] = useState(0);
+  const [sellerBalance, setSellerBalance] = useState(0);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user && user.email === 'demo') {
@@ -234,6 +269,9 @@ export default function App() {
       setShowAuthModal(true);
       return;
     }
+    if (id === 1) {
+      playHi();
+    }
     setDemoAgents(prev => prev.map(a => ({ ...a, isOpen: a.id === id, isAnswered: a.id === id ? true : a.isAnswered })));
     setActiveAgentId(id);
     setHasSelectedAgent(true);
@@ -250,6 +288,32 @@ export default function App() {
     setShowConnectionsModal(true);
     if (onboardingStep === 2) setOnboardingStep(3);
   };
+
+  const playHi = () => {
+    try {
+      const utterance = new SpeechSynthesisUtterance("Hi");
+      utterance.rate = 0.9;
+      utterance.pitch = 1.1;
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      // Fallback to audio if speech synth fails
+      const audio = new Audio('https://api.dictionaryapi.dev/media/pronunciations/en/hi-uk.mp3');
+      audio.play().catch(() => {});
+    }
+  };
+
+  const [wasStaceyOpen, setWasStaceyOpen] = useState(false);
+
+  // useEffect(() => {
+  //   const stacey = demoAgents.find(a => a.id === 1);
+  //   const isOpen = activeAgentId === 1 && stacey?.isOpen;
+  //   
+  //   if (isOpen && !wasStaceyOpen) {
+  //     playHi();
+  //   }
+  //   
+  //   setWasStaceyOpen(!!isOpen);
+  // }, [activeAgentId, demoAgents, wasStaceyOpen]);
 
   const playDing = () => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3');
@@ -388,16 +452,16 @@ export default function App() {
   // }
 
   return (
-    <div className="min-h-screen bg-paper selection:bg-ink selection:text-paper">
+    <div className="min-h-screen flex flex-col bg-paper selection:bg-ink selection:text-paper">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full z-[500] bg-black/80 backdrop-blur-xl border-b border-white/10">
-        <div className="max-w-[1800px] mx-auto px-8 h-24 flex items-center justify-between">
+      <nav className="fixed top-0 w-full z-[500] bg-paper/80 backdrop-blur-xl border-b border-border">
+        <div className="max-w-[1800px] mx-auto px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-16">
             <button onClick={() => setCurrentPage('home')} className="flex flex-col gap-2 group text-left">
-              <span className="font-bold text-xl sm:text-3xl tracking-tighter text-white leading-none group-hover:text-accent transition-colors">FINANCE CHEQUE UK</span>
+              <span className="font-bold text-xl sm:text-3xl tracking-tighter text-ink leading-none group-hover:text-accent transition-colors">FINANCE CHEQUE UK (FCUK)</span>
               <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent/80">
-                <span className="sm:hidden">marketing Agent</span>
-                <span className="hidden sm:inline">Universal Agentic A.I Agent</span>
+                <span className="sm:hidden">Universal Agentic A.I Lead Generation</span>
+                <span className="hidden sm:inline">Universal Agentic A.I Lead Generation</span>
               </span>
             </button>
           </div>
@@ -411,155 +475,117 @@ export default function App() {
                 </div>
                 <div className="flex flex-col items-center opacity-30">
                   <div className="relative">
-                    <User size={20} className="text-white" />
-                    <Plus size={8} className="absolute -top-1 -right-1 text-white" />
+                    <User size={20} className="text-ink" />
+                    <Plus size={8} className="absolute -top-1 -right-1 text-ink" />
                   </div>
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-white">Add</span>
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-ink">Add</span>
                 </div>
               </div>
             ) : null}
 
             <div className="flex items-center gap-4">
               <button 
-                onClick={() => {
-                  setShowInstallModal(true);
-                  setIsWalletMenuOpen(false);
-                }}
-                className="bg-paper border border-border text-ink px-8 py-3 rounded-none font-bold text-xs uppercase tracking-widest hover:bg-accent hover:text-white transition-all"
+                onClick={toggleTheme}
+                className="p-2 text-ink/40 hover:text-ink transition-colors"
+                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               >
-                Free
+                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
               </button>
-
-              <div className="relative">
+              
+              <div className="relative group">
                 <button 
-                  onClick={() => {
-                    setIsWalletMenuOpen(!isWalletMenuOpen);
-                    if (onboardingStep === 7) setOnboardingStep(8);
-                  }}
-                  className="flex items-center gap-3 bg-white text-black px-8 py-3 rounded-none font-bold text-xs uppercase tracking-widest hover:bg-accent hover:text-white transition-all relative"
+                  className="flex items-center gap-2 bg-ink text-paper px-8 py-3 border border-border rounded-none font-bold text-xs uppercase tracking-widest hover:bg-accent hover:border-accent hover:text-paper transition-all"
                 >
-                  {onboardingStep === 7 && cookiesAccepted && (
-                    <div className="absolute -left-2 -top-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-bounce shadow-lg z-50">5</div>
-                  )}
-                  <Menu size={16} />
-                  Enterprise
-                  <ChevronDown size={14} className={`transition-transform ${isWalletMenuOpen ? 'rotate-180' : ''}`} />
+                  Menu
+                  <ChevronDown size={14} />
                 </button>
-
-              <AnimatePresence>
-                {isWalletMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 mt-2 w-64 bg-paper border border-border shadow-2xl p-4 space-y-1"
-                  >
-                    <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-ink/30 border-b border-border mb-2">Account & Settings</div>
-                    
-                    {user && (
-                      <>
-                        <div className="flex items-center justify-between p-3 bg-accent/5 border border-accent/10 mb-2 relative">
-                          <div className="flex items-center gap-2 text-accent">
-                            <Coins size={16} />
-                            <span className="text-xs font-bold">{walletBalance.toFixed(2)} FCUK</span>
-                          </div>
+                <div className="absolute right-0 top-full pt-2 w-64 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all z-[600]">
+                  <div className="bg-paper border border-border shadow-2xl p-2 space-y-1">
+                    {/* Buyer Menu */}
+                    <div className="relative group/buyer">
+                      <button 
+                        className="w-full flex items-center justify-between p-3 hover:bg-card transition-colors text-xs font-bold text-ink/70"
+                      >
+                        Buyer
+                        <ChevronRight size={14} />
+                      </button>
+                      <div className="absolute right-full top-0 pr-2 w-64 opacity-0 pointer-events-none group-hover/buyer:opacity-100 group-hover/buyer:pointer-events-auto transition-all">
+                        <div className="bg-paper border border-border shadow-2xl p-2 space-y-1">
                           <button 
-                            onClick={() => { 
-                              setCurrentPage('exchange'); 
-                              setIsWalletMenuOpen(false); 
-                              if (onboardingStep === 4) setOnboardingStep(5);
-                            }}
-                            className="text-[8px] font-bold uppercase tracking-widest bg-accent text-white px-2 py-1 rounded hover:bg-ink transition-colors"
+                            onClick={() => { setAuthModalTab('signin'); setShowAuthModal(true); }}
+                            className="w-full flex items-center gap-3 p-3 hover:bg-card transition-colors text-xs font-bold text-ink/70"
                           >
-                            Exchange
+                            <User size={16} />
+                            Register / Sign In
                           </button>
-                          {onboardingStep === 4 && user?.email === 'demo' && cookiesAccepted && (
-                            <div className="absolute -left-2 -top-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-bounce shadow-lg z-50">5</div>
-                          )}
+                          <button 
+                            onClick={() => { setCurrentPage('home'); setShowPaymentModal(true); }}
+                            className="w-full flex items-center gap-3 p-3 hover:bg-card transition-colors text-xs font-bold text-ink/70"
+                          >
+                            <Layers size={16} />
+                            Compare Paid Tiers
+                          </button>
                         </div>
+                      </div>
+                    </div>
 
-                        <AnimatePresence>
-                          {showWalletNotice && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="p-3 bg-red-50 text-[10px] font-bold text-red-600 border border-red-100 mb-2 leading-tight">
-                                Connect Gmail to your A.I agent for 5 FCUK credits.
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </>
-                    )}
-                    
-                    {!user ? (
+                    {/* Seller Menu */}
+                    <div className="relative group/seller">
                       <button 
-                        onClick={() => { setAuthModalTab('signin'); setShowAuthModal(true); setIsWalletMenuOpen(false); }}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-card transition-colors text-xs font-bold text-ink/70"
+                        className="w-full flex items-center justify-between p-3 hover:bg-card transition-colors text-xs font-bold text-ink/70"
                       >
-                        <User size={16} />
-                        Sign In / Register
+                        Seller
+                        <ChevronRight size={14} />
                       </button>
-                    ) : (
-                      <button 
-                        onClick={() => setUser(null)}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-red-50 transition-colors text-xs font-bold text-red-500"
-                      >
-                        <Lock size={16} />
-                        Sign Out
-                      </button>
-                    )}
-                    
-                    {user && user.email !== 'demo' && (
-                      <button 
-                        onClick={() => { handleManageBilling(); setIsWalletMenuOpen(false); }}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-card transition-colors text-xs font-bold text-ink/70"
-                      >
-                        <CreditCard size={16} />
-                        Billing
-                      </button>
-                    )}
-                    
-                    <div className="h-[1px] bg-border my-2" />
-                    <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-ink/30">Navigation</div>
-                    
+                      <div className="absolute right-full top-0 pr-2 w-64 opacity-0 pointer-events-none group-hover/seller:opacity-100 group-hover/seller:pointer-events-auto transition-all">
+                        <div className="bg-paper border border-border shadow-2xl p-2 space-y-1">
+                          <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-ink/30 border-b border-border mb-2">Install Options</div>
+                          <div className="grid grid-cols-2 gap-2 p-2">
+                            <button onClick={() => setShowInstallModal(true)} className="flex flex-col items-center gap-2 p-3 hover:bg-card border border-transparent hover:border-border transition-all">
+                              <Terminal size={20} className="text-ink/60" />
+                              <span className="text-[8px] font-bold uppercase">Linux</span>
+                            </button>
+                            <button onClick={() => setShowInstallModal(true)} className="flex flex-col items-center gap-2 p-3 hover:bg-card border border-transparent hover:border-border transition-all">
+                              <Smartphone size={20} className="text-ink/60" />
+                              <span className="text-[8px] font-bold uppercase">Android</span>
+                            </button>
+                            <button onClick={() => setShowInstallModal(true)} className="flex flex-col items-center gap-2 p-3 hover:bg-card border border-transparent hover:border-border transition-all">
+                              <Monitor size={20} className="text-ink/60" />
+                              <span className="text-[8px] font-bold uppercase">Windows</span>
+                            </button>
+                            <button onClick={() => setShowInstallModal(true)} className="flex flex-col items-center gap-2 p-3 hover:bg-card border border-transparent hover:border-border transition-all">
+                              <AppleIcon size={20} className="text-ink/60" />
+                              <span className="text-[8px] font-bold uppercase">MacOS</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Documents */}
                     <button 
-                      onClick={() => { setCurrentPage('exchange'); setIsWalletMenuOpen(false); }}
+                      onClick={() => setCurrentPage('docs')}
                       className="w-full flex items-center gap-3 p-3 hover:bg-card transition-colors text-xs font-bold text-ink/70"
                     >
-                      <Globe size={16} />
-                      FCUK Exchange
-                    </button>
-                    <button 
-                      onClick={() => { setCurrentPage('docs'); setIsWalletMenuOpen(false); }}
-                      className="w-full flex items-center gap-3 p-3 hover:bg-card transition-colors text-xs font-bold text-accent"
-                    >
-                      <BookOpen size={16} />
-                      Documentation
+                      <FileText size={16} />
+                      Documents
                     </button>
 
-                    <div className="h-[1px] bg-border my-2" />
-                    <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-ink/30">Preferences</div>
-                    
-                    <div className="flex items-center justify-between p-3">
-                      <span className="text-xs font-bold text-ink/70">Theme</span>
-                      <ThemeToggle />
-                    </div>
-                    <div className="flex items-center justify-between p-3">
-                      <span className="text-xs font-bold text-ink/70">Language</span>
-                      <LanguageSelector currentLang={lang} onLangChange={setLang} />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    {/* Exchange */}
+                    <button 
+                      onClick={() => setCurrentPage('exchange')}
+                      className="w-full flex items-center gap-3 p-3 hover:bg-card transition-colors text-xs font-bold text-ink/70"
+                    >
+                      <Coins size={16} />
+                      Exchange
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
 
       {/* Mobile Menu Removed - Wallet Menu Replaces It */}
 
@@ -570,13 +596,13 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[1100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
+            className="fixed top-20 left-0 right-0 bottom-0 z-[1100] flex items-start justify-center p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-2xl bg-paper border border-border p-10 space-y-8 shadow-2xl relative"
+              className="w-full max-w-2xl bg-paper border border-border p-10 space-y-8 shadow-2xl relative my-8"
             >
               <button 
                 onClick={() => setShowInstallModal(false)}
@@ -617,7 +643,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <main className="pt-24">
+      <main className="pt-20">
         {currentPage === 'exchange' ? (
           <Exchange 
             onBack={() => setCurrentPage('home')} 
@@ -684,250 +710,305 @@ export default function App() {
           </div>
         ) : (
           <>
-            <div className="flex flex-col h-[calc(100vh-6rem)] relative">
-              {/* Demo Manager UI */}
-              <div className="absolute inset-0 z-[200] pointer-events-none overflow-y-auto">
-                <div className="max-w-[1800px] mx-auto px-8 py-24 min-h-full flex items-center justify-center">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 sm:gap-20 lg:gap-24 items-center justify-items-center w-full">
-                    {/* CEO Silhouette */}
-                    <div className="flex flex-col items-center gap-6 pointer-events-auto">
-                      {/* Silhouette */}
-                      <div className="relative">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => handleOpenAgent(1)}
-                          className="w-24 h-24 sm:w-32 sm:h-32 rounded-full relative overflow-hidden shadow-2xl transition-all flex items-center justify-center"
-                          style={{ 
-                            backgroundImage: 'url(input_file_0.png)',
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            border: 'none'
-                          }}
-                        />
-                        {onboardingStep === 0 && !user && cookiesAccepted && (
-                          <motion.button 
-                            onClick={() => handleOpenAgent(1)}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-50"
-                          >
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent text-white rounded-full flex items-center justify-center animate-bounce shadow-2xl">
-                              <Phone size={16} />
-                            </div>
-                          </motion.button>
-                        )}
+            <div className="flex flex-col md:flex-row min-h-[calc(100vh-10rem)] relative">
+              {/* Buyer Form Section (Left Half) */}
+              <div className="w-full md:w-1/2 px-8 py-2 flex flex-col justify-start bg-paper/50 relative z-[300]">
+                <div className="max-w-md mx-auto w-full space-y-8">
+                  <div className="flex items-center justify-between w-full mb-4 pb-8 border-b border-border">
+                    <h2 className="text-3xl font-bold tracking-tighter text-ink">Buyer</h2>
+                    {/* Mock Wallet Balance */}
+                    <button 
+                      onClick={() => {
+                        setAuthModalTab('signin');
+                        setShowAuthModal(true);
+                      }}
+                      className="group flex flex-col items-end gap-1 p-4 bg-card border border-border hover:border-accent transition-all min-w-[130px]"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Wallet size={14} className="text-accent group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-ink/30">Balance</span>
                       </div>
+                      <span className={`text-xl font-bold font-mono ${buyerBalance < 0 ? 'text-red-500' : 'text-ink'}`}>
+                        £{buyerBalance.toFixed(2)}
+                      </span>
+                    </button>
+                  </div>
 
-                      {/* Controls Stack */}
-                      <div className="flex flex-col items-center gap-4 w-full max-w-[160px] sm:max-w-[200px]">
-                        <div className="flex items-center justify-center gap-3 w-full">
-                          <div className="flex items-center gap-1.5">
-                            <button 
-                              onClick={() => setShowContactModal(true)}
-                              className="hover:scale-110 transition-transform opacity-90 hover:opacity-100"
-                            >
-                              <Mail size={16} className="text-accent" />
-                            </button>
-                            <button 
-                              onClick={() => setShowContactModal(true)}
-                              className="hover:scale-110 transition-transform opacity-90 hover:opacity-100"
-                            >
-                              <img 
-                                src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" 
-                                alt="WhatsApp" 
-                                className="w-5 h-5 object-contain"
-                                referrerPolicy="no-referrer"
-                              />
-                            </button>
-                            <button 
-                              onClick={() => setShowContactModal(true)}
-                              className="hover:scale-110 transition-transform opacity-90 hover:opacity-100"
-                            >
-                              <img 
-                                src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" 
-                                alt="Telegram" 
-                                className="w-5 h-5 object-contain"
-                                referrerPolicy="no-referrer"
-                              />
-                            </button>
-                          </div>
-                          <div className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink/80 truncate whitespace-nowrap">CEO</div>
-                        </div>
+                  <form 
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const cost = parseFloat(payPerLead) * parseInt(leadCount);
+                      if (isNaN(cost)) {
+                        setFormError("Please enter valid amounts.");
+                        return;
+                      }
 
-                        <div className="grid grid-cols-2 gap-2 w-full">
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleConnectAgent(1);
-                            }}
-                            className="flex items-center justify-center gap-2 bg-accent text-white py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-ink transition-all shadow-lg active:scale-95 pointer-events-auto relative"
-                          >
-                            {onboardingStep === 2 && cookiesAccepted && (
-                              <div className="absolute -left-2 -top-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-bounce shadow-lg z-50">2</div>
-                            )}
-                            <Zap size={14} />
-                            Connect
-                          </button>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (demoAgents[0].balance > 0) {
-                                setCurrentPage('exchange');
-                                if (onboardingStep === 5) setOnboardingStep(6);
-                              }
-                            }}
-                            className="flex items-center justify-center gap-2 bg-card border border-border py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest text-ink/40 hover:text-accent hover:border-accent transition-all pointer-events-auto relative"
-                          >
-                            {onboardingStep === 5 && cookiesAccepted && (
-                              <div className="absolute -left-2 -top-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-bounce shadow-lg z-50">4</div>
-                            )}
-                            <Coins size={14} />
-                            {demoAgents[0].balance.toFixed(2)}
-                          </button>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSpawn();
-                            }}
-                            className="flex items-center justify-center gap-2 bg-card border border-border py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/40 hover:text-accent hover:border-accent transition-all pointer-events-auto"
-                          >
-                            <Plus size={12} />
-                            Spawn
-                          </button>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveAgent(1);
-                            }}
-                            className="flex items-center justify-center gap-2 bg-card border border-border py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/40 hover:text-accent hover:border-accent transition-all pointer-events-auto"
-                          >
-                            <X size={12} />
-                            Remove
-                          </button>
-                        </div>
+                      // Check if balance covers the order
+                      if (buyerBalance <= -500) {
+                        setFormError("Credit limit reached (£-500). Please sign in to top up your wallet.");
+                        return;
+                      }
+
+                      if (buyerBalance === 0 && cost > 0) {
+                        setFormError("Insufficient funds. Sign in to top up your wallet.");
+                        return;
+                      }
+
+                      if (buyerBalance - cost < -500) {
+                        setFormError("Order exceeds credit limit. Minimum balance allowed is £-500.");
+                        return;
+                      }
+                      
+                      setBuyerBalance(prev => prev - cost);
+                      setFormError(null);
+                      
+                      if (buyerBalance - cost < 0) {
+                        setFormError("Notice: Your wallet balance is now negative. Sign in to top up.");
+                      }
+                    }}
+                    className="space-y-6"
+                  >
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-ink/30">Website URL</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={buyerWebsiteUrl}
+                        onChange={(e) => setBuyerWebsiteUrl(e.target.value)}
+                        placeholder="your-business.com"
+                        onFocus={() => setDemoPrompt("Hey")}
+                        className="w-full bg-card border border-border px-4 py-4 text-sm font-medium focus:outline-none focus:border-accent transition-colors rounded-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-ink/30">Budget Per Lead (£)</label>
+                        <input 
+                          type="number" 
+                          required
+                          step="0.01"
+                          min="0.10"
+                          value={payPerLead}
+                          onChange={(e) => setPayPerLead(e.target.value)}
+                          placeholder="5.00"
+                          onFocus={() => setDemoPrompt("Hey")}
+                          className="w-full bg-card border border-border px-4 py-4 text-sm font-medium focus:outline-none focus:border-accent transition-colors rounded-none"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-ink/30">Quantity (Leads)</label>
+                        <input 
+                          type="number" 
+                          required
+                          min="1"
+                          value={leadCount}
+                          onChange={(e) => setLeadCount(e.target.value)}
+                          placeholder="100"
+                          onFocus={() => setDemoPrompt("Hey")}
+                          className="w-full bg-card border border-border px-4 py-4 text-sm font-medium focus:outline-none focus:border-accent transition-colors rounded-none"
+                        />
                       </div>
                     </div>
 
-                    {/* Add Agent Silhouettes */}
-                    {[2, 3, 4, 5].map((id) => (
-                      <div key={id} className={`flex flex-col items-center gap-6 pointer-events-auto opacity-70 grayscale transition-all hover:opacity-100 hover:grayscale-0 ${id === 2 ? 'flex' : id === 3 ? 'hidden sm:flex' : id === 4 ? 'hidden lg:flex' : 'hidden xl:flex'}`}>
-                        {/* Silhouette */}
-                        <div className="relative">
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => {
-                              if (!user) {
-                                setAuthModalTab('signup');
-                                setShowAuthModal(true);
-                              } else if (user.email === 'demo') {
-                                if (id === 1 && onboardingStep === 0) {
-                                  setOnboardingStep(1);
-                                }
-                                setActiveAgentId(id);
-                                setDemoAgents(prev => prev.map(a => a.id === id ? { ...a, isOpen: true } : a));
-                              }
-                            }}
-                            className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full ${demoAgents.find(a => a.id === id)?.isSpawned ? 'bg-[#0a0a0a]' : 'bg-[#0a0a0a]/30 border-dashed'} border-4 border-[#1a1a1a] relative overflow-hidden shadow-xl transition-all flex items-center justify-center hover:border-accent/50 group`}
-                          >
-                            {demoAgents.find(a => a.id === id)?.isSpawned ? (
-                              demoAgents.find(a => a.id === id)?.isAnswered ? <SineWave /> : <RingingPhone />
-                            ) : (
-                              <div className="relative">
-                                <User size={40} className="sm:size-[60px] text-accent/5 opacity-20" />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <Plus size={20} className="sm:size-[24px] text-accent/40 group-hover:text-accent transition-colors" />
-                                </div>
-                              </div>
-                            )}
-                          </motion.button>
-                        </div>
-
-                        {/* Controls Stack */}
-                        <div className="flex flex-col items-center gap-4 w-full max-w-[160px] sm:max-w-[200px]">
-                          <div className="flex items-center justify-center gap-3 w-full">
-                            <div className="flex items-center gap-1.5">
-                              <button 
-                                onClick={() => handleConnectAgent(id)}
-                                className="hover:scale-110 transition-transform opacity-90 hover:opacity-100"
-                              >
-                                <Zap size={16} className="text-accent" />
-                              </button>
-                              <button disabled className="opacity-50">
-                                <img 
-                                  src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" 
-                                  alt="WhatsApp" 
-                                  className="w-5 h-5 object-contain"
-                                  referrerPolicy="no-referrer"
-                                />
-                              </button>
-                              <button disabled className="opacity-50">
-                                <img 
-                                  src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" 
-                                  alt="Telegram" 
-                                  className="w-5 h-5 object-contain"
-                                  referrerPolicy="no-referrer"
-                                />
-                              </button>
-                            </div>
-                            <div className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink/40 truncate whitespace-nowrap">Agent {id}</div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-2 w-full">
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleConnectAgent(id);
-                              }}
-                              className="flex items-center justify-center gap-2 bg-card/50 border border-border/50 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest text-ink/20 hover:text-accent hover:border-accent transition-all pointer-events-auto"
-                            >
-                              <Zap size={14} />
-                              Connect
-                            </button>
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const agent = demoAgents.find(a => a.id === id);
-                                if (agent && agent.balance > 0) {
-                                  setCurrentPage('exchange');
-                                }
-                              }}
-                              className="flex items-center justify-center gap-2 bg-card/50 border border-border/50 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest text-ink/20 pointer-events-auto"
-                            >
-                              <Coins size={14} />
-                              {demoAgents.find(a => a.id === id)?.balance.toFixed(2) || '0.00'}
-                            </button>
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleSpawn();
-                              }}
-                              className="flex items-center justify-center gap-2 bg-card/50 border border-border/50 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/20 hover:text-accent hover:border-accent transition-all pointer-events-auto"
-                            >
-                              <Plus size={12} />
-                              Spawn
-                            </button>
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveAgent(id);
-                              }}
-                              className="flex items-center justify-center gap-2 bg-card/50 border border-border/50 py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest text-ink/20 hover:text-red-500 hover:border-red-500 transition-all pointer-events-auto"
-                            >
-                              <X size={12} />
-                              Remove
-                            </button>
-                          </div>
-                        </div>
+                    {formError && (
+                      <div className="p-4 bg-red-500/10 border border-red-500/20 flex items-start gap-4">
+                        <Bell size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider leading-relaxed">
+                          {formError}
+                        </p>
                       </div>
-                    ))}
-                  </div>
+                    )}
+
+                    <div className="pt-4">
+                      <button 
+                        type="submit"
+                        className="w-full bg-accent text-white font-bold py-5 uppercase tracking-widest text-xs hover:bg-ink transition-all flex items-center justify-center gap-3 shadow-xl shadow-accent/20"
+                      >
+                        <Send size={18} />
+                        Order
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
 
-              <ConnectionsModal 
-            isOpen={showConnectionsModal}
+              {/* Demo Manager UI (Right Half) */}
+              <div className="w-full md:w-1/2 relative bg-ink/5 border-l border-border/50">
+                <div className="pointer-events-auto">
+                  <div className="max-w-[800px] mx-auto px-8 py-2 min-h-full flex flex-col items-center justify-start">
+                    <div className="flex flex-col items-center w-full">
+                      {/* Seller Title & Wallet Bar */}
+                      <div className="flex items-center justify-between w-full mb-4 pb-8 border-b border-border">
+                        <h2 className="text-3xl font-bold tracking-tighter text-ink">Seller(s)</h2>
+                        <button 
+                          onClick={() => {
+                            setAuthModalTab('signin');
+                            setShowAuthModal(true);
+                          }}
+                          className="group flex flex-col items-end gap-1 p-4 bg-card border border-border hover:border-accent transition-all min-w-[130px]"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Wallet size={14} className="text-accent group-hover:scale-110 transition-transform" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-ink/30">Balance</span>
+                          </div>
+                          <span className={`text-xl font-bold font-mono ${sellerBalance < 0 ? 'text-red-500' : 'text-ink'}`}>
+                            £{sellerBalance.toFixed(2)}
+                          </span>
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 sm:gap-16 lg:gap-20 items-start justify-items-center w-full">
+                        {/* Agent 1: Stacey */}
+                        <div className="flex flex-col items-center gap-6 pointer-events-auto">
+                          <div className="relative">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleOpenAgent(1)}
+                              className="w-24 h-24 sm:w-32 sm:h-32 rounded-full relative overflow-hidden shadow-2xl transition-all flex items-center justify-center"
+                              style={{ 
+                                backgroundImage: 'url("https://r2.erweima.ai/ai_image/95462580-b747-49a7-96a8-f7166e4a2d71.png")',
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                border: 'none'
+                              }}
+                            />
+                            {onboardingStep === 0 && !user && cookiesAccepted && (
+                              <motion.button 
+                                onClick={() => handleOpenAgent(1)}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-50"
+                              >
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent text-white rounded-full flex items-center justify-center animate-bounce shadow-2xl">
+                                  <Phone size={16} />
+                                </div>
+                              </motion.button>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col items-center gap-4 w-full max-w-[160px] sm:max-w-[200px]">
+                            <div className="flex items-center justify-center gap-3 w-full">
+                              <div className="flex items-center gap-1.5">
+                                <button onClick={() => setShowContactModal(true)} className="hover:scale-110 transition-transform opacity-90 hover:opacity-100">
+                                  <Mail size={16} className="text-accent" />
+                                </button>
+                                <button onClick={() => setShowContactModal(true)} className="hover:scale-110 transition-transform opacity-90 hover:opacity-100">
+                                  <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-5 h-5 object-contain" referrerPolicy="no-referrer" />
+                                </button>
+                                <button onClick={() => setShowContactModal(true)} className="hover:scale-110 transition-transform opacity-90 hover:opacity-100">
+                                  <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Telegram" className="w-5 h-5 object-contain" referrerPolicy="no-referrer" />
+                                </button>
+                              </div>
+                              <div className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink/80 truncate whitespace-nowrap">Stacey</div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 w-full">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleConnectAgent(1); }}
+                                className="flex items-center justify-center gap-2 bg-accent text-white py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-ink transition-all shadow-lg active:scale-95 pointer-events-auto relative"
+                              >
+                                {onboardingStep === 2 && cookiesAccepted && (
+                                  <div className="absolute -left-2 -top-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-[10px] font-bold animate-bounce shadow-lg z-50">2</div>
+                                )}
+                                <Zap size={14} />
+                                Connect
+                              </button>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (demoAgents[0].balance > 0) {
+                                    setCurrentPage('exchange');
+                                  }
+                                }}
+                                className="flex items-center justify-center gap-2 bg-card border border-border py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest text-ink/40 hover:text-accent hover:border-accent transition-all pointer-events-auto relative"
+                              >
+                                <Coins size={14} />
+                                {demoAgents[0].balance.toFixed(2)}
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Hey Prompt Space */}
+                          <div className="relative h-8 mt-2 w-full flex justify-center">
+                            <AnimatePresence>
+                              {demoPrompt === "Hey" && (
+                                <motion.div 
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0, y: 10 }}
+                                  className="bg-accent text-white text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full shadow-lg whitespace-nowrap"
+                                >
+                                  Hey
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </div>
+
+                        {/* Agent 2 */}
+                        {[2].map((id) => (
+                          <div key={id} className="flex flex-col items-center gap-6 pointer-events-auto">
+                            <div className="relative">
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => handleOpenAgent(id)}
+                                className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full ${demoAgents.find(a => a.id === id)?.isSpawned ? 'bg-[#0a0a0a]' : 'bg-[#0a0a0a]/30 border-dashed'} border-4 border-[#1a1a1a] relative overflow-hidden shadow-xl transition-all flex items-center justify-center hover:border-accent/50 group`}
+                              >
+                                {demoAgents.find(a => a.id === id)?.isSpawned ? (
+                                  demoAgents.find(a => a.id === id)?.isAnswered ? <SineWave /> : <RingingPhone />
+                                ) : (
+                                  <div className="relative">
+                                    <User size={40} className="sm:size-[60px] text-accent/5 opacity-20" />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <Plus size={20} className="sm:size-[24px] text-accent/40 group-hover:text-accent transition-colors" />
+                                    </div>
+                                  </div>
+                                )}
+                              </motion.button>
+                            </div>
+
+                            <div className="flex flex-col items-center gap-4 w-full max-w-[160px] sm:max-w-[200px]">
+                              <div className="flex items-center justify-center gap-3 w-full">
+                                <div className="flex items-center gap-1.5">
+                                  <button onClick={() => handleConnectAgent(id)} className="hover:scale-110 transition-transform opacity-90 hover:opacity-100">
+                                    <Zap size={16} className="text-accent" />
+                                  </button>
+                                  <button disabled className="opacity-50">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-5 h-5 object-contain" referrerPolicy="no-referrer" />
+                                  </button>
+                                  <button disabled className="opacity-50">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Telegram" className="w-5 h-5 object-contain" referrerPolicy="no-referrer" />
+                                  </button>
+                                </div>
+                                <div className="text-[12px] font-bold uppercase tracking-[0.2em] text-ink/40 truncate whitespace-nowrap">Agent {id}</div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2 w-full">
+                                <button onClick={(e) => { e.stopPropagation(); handleConnectAgent(id); }} className="flex items-center justify-center gap-2 bg-card/50 border border-border/50 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest text-ink/20 hover:text-accent hover:border-accent transition-all pointer-events-auto">
+                                  <Zap size={14} /> Connect
+                                </button>
+                                <button onClick={(e) => { e.stopPropagation(); }} className="flex items-center justify-center gap-2 bg-card/50 border border-border/50 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest text-ink/20 pointer-events-auto">
+                                  <Coins size={14} /> {demoAgents.find(a => a.id === id)?.balance.toFixed(2) || '0.00'}
+                                </button>
+                              </div>
+                            </div>
+                            {/* Spacer to match Stacey's prompt area */}
+                            <div className="h-8 mt-2" />
+                          </div>
+                        ))}
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+        <ConnectionsModal 
+          isOpen={showConnectionsModal}
             onClose={() => setShowConnectionsModal(false)}
             onboardingStep={onboardingStep}
             cookiesAccepted={cookiesAccepted}
@@ -947,13 +1028,19 @@ export default function App() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[1100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
+                className="fixed top-20 left-0 right-0 bottom-0 z-[1100] flex items-start justify-center p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
               >
                 <motion.div 
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="w-full max-w-md bg-paper border border-border p-10 space-y-8 shadow-2xl frame"
+                  className="w-full max-w-md bg-paper border border-border p-10 space-y-8 shadow-2xl relative frame my-8"
                 >
+                  <button 
+                    onClick={() => setActiveOAuth(null)} 
+                    className="absolute top-6 right-6 text-ink/20 hover:text-ink transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 relative">
                       <div className="w-12 h-12 bg-accent/10 text-accent flex items-center justify-center rounded-xl">
@@ -964,9 +1051,6 @@ export default function App() {
                         <p className="text-[10px] text-ink/40 uppercase font-bold tracking-widest">Grant Agent Permissions</p>
                       </div>
                     </div>
-                    <button onClick={() => setActiveOAuth(null)} className="text-ink/20 hover:text-ink">
-                      <X size={20} />
-                    </button>
                   </div>
 
                   <div className="space-y-6">
@@ -1027,9 +1111,8 @@ export default function App() {
               <AnimatePresence>
                 {/* Onboarding guide box removed - markers are used instead */}
               </AnimatePresence>
-            </div>
 
-            <div className="flex-1 flex items-center justify-center">
+              <div className="flex-1 flex items-center justify-center">
               {activeAgentId && demoAgents.find(a => a.id === activeAgentId)?.isOpen ? (
                 <Dashboard 
                   reloadKey={dashboardKey}
@@ -1066,22 +1149,55 @@ export default function App() {
 
       <Compliance onAccept={() => setCookiesAccepted(true)} />
 
-      {/* Demo Modal Removed - Now integrated into main view when logged in */}
-
-      {!user && (
-        <footer className="bg-black text-white/40 p-6 border-t border-white/5">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <span className="font-bold text-sm tracking-tighter text-white/60">Finance Cheque UK (FCUK)</span>
-            <p className="text-[9px] uppercase tracking-widest">
-              DATRO CONSORTIUM LIMITED • Waterlooville, PO8 0BT • 02031377118
-            </p>
-            <div className="flex gap-4">
-              <button onClick={() => setCurrentPage('docs')} className="text-[9px] font-bold uppercase tracking-widest hover:text-accent transition-colors">Docs</button>
-              <button onClick={() => setCurrentPage('exchange')} className="text-[9px] font-bold uppercase tracking-widest hover:text-accent transition-colors">Exchange</button>
+      {/* Modals and Overlays */}
+        <footer className="bg-paper text-ink/40 py-4 px-6 border-t border-border relative">
+          <div className="max-w-7xl mx-auto space-y-4">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+              <div className="flex flex-col items-center md:items-start gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-xs tracking-tighter text-ink/60">Finance Cheque UK (FCUK)</span>
+                  <div className="relative">
+                    <button 
+                      onMouseEnter={() => setShowJointVentureTooltip(true)}
+                      onMouseLeave={() => setShowJointVentureTooltip(false)}
+                      onClick={() => setShowJointVentureTooltip(!showJointVentureTooltip)}
+                      className="text-ink/20 hover:text-accent transition-colors"
+                    >
+                      <Info size={12} />
+                    </button>
+                    <AnimatePresence>
+                      {showJointVentureTooltip && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="absolute bottom-full mb-2 left-0 w-80 p-4 bg-card border border-border shadow-2xl z-[600] text-[9px] leading-relaxed font-bold normal-case text-ink/80"
+                        >
+                          Joint venture between Vcare Saver Club Limited, a company incorporated in England and Wales (registered number 08001973), 27 Old Gloucester Street, London, United Kingdom, WC1N 3AX and Datro Consortium Limited, a company incorporated in England and Wales (registered number 13775817), Unit 29 Highcroft Industrial Estate, Enterprise Road, Waterlooville, England, PO8 0BT.
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+                <p className="text-[8px] tracking-widest text-ink/20">© 2026 Vcare Saver Club Limited & Datro Consortium Limited. All Rights Reserved.</p>
+              </div>
+              <div className="flex gap-6 items-center">
+                <a href="#" className="text-ink/20 hover:text-accent transition-colors">
+                  <Facebook size={16} />
+                </a>
+                <a href="#" className="text-ink/20 hover:text-accent transition-colors">
+                  <Twitter size={16} />
+                </a>
+                <a href="#" className="text-ink/20 hover:text-accent transition-colors">
+                  <Instagram size={16} />
+                </a>
+                <a href="#" className="text-ink/20 hover:text-accent transition-colors">
+                  <Linkedin size={16} />
+                </a>
+              </div>
             </div>
           </div>
         </footer>
-      )}
 
       {/* Modals */}
       <AnimatePresence>
@@ -1090,13 +1206,19 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed top-[106px] left-0 right-0 bottom-0 z-[1000] flex items-start justify-center p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
+            className="fixed top-20 left-0 right-0 bottom-0 z-[1100] flex items-start justify-center p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
           >
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="w-full max-w-sm bg-paper border border-border p-10 space-y-8 shadow-2xl frame text-center my-8"
+              className="w-full max-w-sm bg-paper border border-border p-10 space-y-8 shadow-2xl relative frame text-center my-8"
             >
+              <button 
+                onClick={() => setShowContactModal(false)}
+                className="absolute top-6 right-6 text-ink/20 hover:text-ink transition-colors"
+              >
+                <X size={20} />
+              </button>
               <div className="flex flex-col items-center gap-4">
                 <div className="w-16 h-16 bg-accent/10 text-accent flex items-center justify-center rounded-full">
                   <User size={32} />
@@ -1122,13 +1244,19 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed top-[106px] left-0 right-0 bottom-0 z-[1000] flex items-start justify-center p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
+            className="fixed top-20 left-0 right-0 bottom-0 z-[1200] flex items-start justify-center p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
           >
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="w-full max-w-sm bg-paper border border-border p-10 space-y-8 shadow-2xl frame text-center my-8"
+              className="w-full max-w-sm bg-paper border border-border p-10 space-y-8 shadow-2xl relative frame text-center my-8"
             >
+              <button 
+                onClick={() => setShowLogoutWarning(false)}
+                className="absolute top-6 right-6 text-ink/20 hover:text-ink transition-colors"
+              >
+                <X size={20} />
+              </button>
               <div className="flex flex-col items-center gap-4">
                 <div className="w-16 h-16 bg-red-500/10 text-red-500 flex items-center justify-center rounded-full">
                   <Bell size={32} />
@@ -1151,39 +1279,42 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed top-[106px] left-0 right-0 bottom-0 z-[1000] flex items-start justify-center p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
+            className="fixed top-20 left-0 right-0 bottom-0 z-[1300] flex items-start justify-center p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
           >
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="w-full max-w-4xl bg-paper border border-border p-12 space-y-12 shadow-2xl frame my-8"
+              className="w-full max-w-4xl bg-paper border border-border p-12 space-y-12 shadow-2xl relative frame my-8"
             >
+              <button 
+                onClick={() => setShowPaymentModal(false)}
+                className="absolute top-8 right-8 text-ink/20 hover:text-ink transition-colors"
+              >
+                <X size={32} />
+              </button>
+
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
                   <h3 className="text-3xl font-bold text-ink tracking-tighter">Select Package</h3>
                   <p className="text-[10px] text-ink/40 uppercase font-bold tracking-widest">Scale Your Agentic Network</p>
                 </div>
-                <button onClick={() => setShowPaymentModal(false)} className="text-ink/20 hover:text-ink">
-                  <X size={32} />
-                </button>
               </div>
 
               <div className="grid grid-cols-2 gap-8">
-                {/* Personal Package */}
                 <div className="p-8 border border-border bg-card space-y-8 flex flex-col">
                   <div className="space-y-4">
                     <div className="w-12 h-12 bg-accent/10 text-accent flex items-center justify-center rounded-xl">
                       <Users size={24} />
                     </div>
-                    <h4 className="text-xl font-bold text-ink">Personal Package</h4>
+                    <h4 className="text-xl font-bold text-ink">Soloprenuer (Pay As You Go)</h4>
                     <p className="text-sm text-ink/60 leading-relaxed">
-                      Free agent for friends and family. Share your success across social platforms.
+                      Free agent for friends and family. Scale your personal reach.
                     </p>
                   </div>
                   <div className="flex-1 space-y-4">
                     <div className="flex items-center gap-3 text-xs font-bold text-ink/80">
                       <CheckCircle2 size={16} className="text-green-500" />
-                      Social Media Sharing
+                      Social Media Automation
                     </div>
                     <div className="flex items-center gap-3 text-xs font-bold text-ink/80">
                       <CheckCircle2 size={16} className="text-green-500" />
@@ -1195,33 +1326,21 @@ export default function App() {
                     </div>
                   </div>
                   <div className="pt-8 space-y-4">
-                    <div className="flex items-center gap-4 justify-center">
-                      <button className="p-3 bg-blue-500 text-white rounded-full hover:scale-110 transition-transform">
-                        <Facebook size={20} />
-                      </button>
-                      <button className="p-3 bg-sky-400 text-white rounded-full hover:scale-110 transition-transform">
-                        <Twitter size={20} />
-                      </button>
-                      <button className="p-3 bg-ink text-white rounded-full hover:scale-110 transition-transform">
-                        <Mail size={20} />
-                      </button>
-                    </div>
                     <button className="w-full bg-accent text-white font-bold py-5 uppercase tracking-widest text-xs hover:bg-ink transition-all">
-                      Select Personal
+                      Select Soloprenuer
                     </button>
                   </div>
                 </div>
 
-                {/* Business Package */}
                 <div className="p-8 border-2 border-accent bg-accent/5 space-y-8 flex flex-col relative">
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-accent text-white px-4 py-1 text-[10px] font-bold uppercase tracking-widest">Recommended</div>
                   <div className="space-y-4">
                     <div className="w-12 h-12 bg-accent text-white flex items-center justify-center rounded-xl">
                       <Shield size={24} />
                     </div>
-                    <h4 className="text-xl font-bold text-ink">Business Package</h4>
+                    <h4 className="text-xl font-bold text-ink">Business</h4>
                     <p className="text-sm text-ink/60 leading-relaxed">
-                      Create a subordinate agent to the existing CEO agent. Full commercial rights.
+                      Create a subordinate agent to the existing Stacey agent. Full commercial rights.
                     </p>
                   </div>
                   <div className="flex-1 space-y-4">

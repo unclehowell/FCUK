@@ -54,7 +54,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, onNavigate, 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed top-[106px] left-0 right-0 bottom-0 z-[1000] flex items-start justify-center p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
+          className="fixed top-20 left-0 right-0 bottom-0 z-[1000] flex items-start justify-center p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
         >
           <motion.div
             initial={{ y: 20, opacity: 0 }}
@@ -134,22 +134,24 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, onNavigate, 
                 </div>
 
                 {/* Demo Checkbox */}
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="relative flex items-center justify-center">
-                    <input 
-                      type="checkbox" 
-                      checked={isDemo}
-                      onChange={(e) => handleDemoToggle(e.target.checked)}
-                      className="peer appearance-none w-5 h-5 border border-border bg-card rounded transition-all checked:bg-accent checked:border-accent"
-                    />
-                    <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none text-white">
-                      <ArrowRight size={12} className="rotate-[-45deg]" />
+                {activeTab === 'signin' && (
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative flex items-center justify-center">
+                      <input 
+                        type="checkbox" 
+                        checked={isDemo}
+                        onChange={(e) => handleDemoToggle(e.target.checked)}
+                        className="peer appearance-none w-5 h-5 border border-border bg-card rounded transition-all checked:bg-accent checked:border-accent"
+                      />
+                      <div className="absolute opacity-0 peer-checked:opacity-100 pointer-events-none text-white">
+                        <ArrowRight size={12} className="rotate-[-45deg]" />
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40 group-hover:text-ink transition-colors">
-                    Demo Account
-                  </span>
-                </label>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40 group-hover:text-ink transition-colors">
+                      Demo Account
+                    </span>
+                  </label>
+                )}
               </div>
 
               {error && (
